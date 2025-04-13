@@ -76,4 +76,3 @@ flowchart TD
     %% Real-time Communication
     ConnManager --> BroadcastToRoom[Broadcast to Room Players]
     BroadcastToRoom --> Client
-    ```
