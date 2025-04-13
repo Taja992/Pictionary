@@ -1,3 +1,6 @@
+# Pictionary Game Architecture
+
+```mermaid
 flowchart TD
     Client([Client]) --> RESTRoute[REST API Request]
     Client --> WSRoute[WebSocket API Request]
@@ -73,3 +76,4 @@ flowchart TD
     %% Real-time Communication
     ConnManager --> BroadcastToRoom[Broadcast to Room Players]
     BroadcastToRoom --> Client
+    ```
