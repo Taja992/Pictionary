@@ -1,0 +1,132 @@
+# .NET Core specific ignores
+##########################
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dll.refresh
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+
+# .NET core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+*.coverage
+*.coveragexml
+*.userprefs
+*.usertasks
+
+# Entity Framework
+Migrations/
+
+# Sensitive configuration files
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+!/appsettings.json
+*.pfx
+*.key
+*.pem
+
+# React/Frontend specific ignores
+################################
+# dependencies
+**/node_modules
+**/.pnp
+**/.pnp.js
+
+# testing
+**/coverage
+
+# production
+**/build
+**/dist
+
+# misc
+**/.DS_Store
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/.env
+
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.npm
+**/.eslintcache
+**/.yarn-integrity
+
+# Editor directories and files
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+
+# Cache directories
+.npm
+.eslintcache
+
+# Vite
+**/.vite/
+
+# TypeScript
+**/*.tsbuildinfo
+**/.next
+
+# Operating System specific files
+################################
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+.directory
+.Trash-*
