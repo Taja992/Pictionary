@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Application.Models;
 using Application;
 using Api.Rest;
+using Infrastructure.Postgres;
 using NSwag.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +51,7 @@ builder.Services.AddOpenApiDocument(config =>
 
 // Add services from your other projects
 // builder.Services.AddApplicationServices();
-// builder.Services.AddPostgresInfrastructure(builder.Configuration);
+builder.Services.AddPostgresInfrastructure(builder.Configuration);
 // builder.Services.AddWebSocketInfrastructure();
 builder.Services.AddRestApi();
 // builder.Services.AddWebSocketApi();
