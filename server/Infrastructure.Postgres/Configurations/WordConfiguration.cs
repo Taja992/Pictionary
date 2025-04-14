@@ -14,7 +14,6 @@ public class WordConfiguration : IEntityTypeConfiguration<Word>
         builder.Property(w => w.Text).IsRequired().HasMaxLength(50);
         builder.HasIndex(w => w.Text).IsUnique();
         
-        builder.Property(w => w.Difficulty).IsRequired();
         builder.Property(w => w.Category).HasMaxLength(50);
         builder.Property(w => w.TimesUsed).IsRequired();
     }

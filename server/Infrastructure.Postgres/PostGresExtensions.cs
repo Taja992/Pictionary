@@ -1,7 +1,8 @@
+using Application.Repositories;
+using Infrastructure.Postgres.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Application.Models;
 
 namespace Infrastructure.Postgres;
 
@@ -14,10 +15,13 @@ public static class PostgresExtensions
         services.AddDbContext<PictionaryDbContext>(options =>
             options.UseNpgsql(connectionString));
         
-        // Register repositories here when you create them
-        // services.AddScoped<IGameRepository, GameRepository>();
-        // services.AddScoped<IUserRepository, UserRepository>();
-        // etc.
+        // Register repositories
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoomRepository, RoomRepository>();
+        services.AddScoped<IGameRepository, GameRepository>();
+        services.AddScoped<IWordRepository, WordRepository>();
+        services.AddScoped<IScoreRepository, ScoreRepository>();
+        services.AddScoped<IDrawingRepository, DrawingRepository>();
         
         return services;
     }
