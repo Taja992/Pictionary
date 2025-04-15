@@ -6,6 +6,10 @@ using Application;
 using Api.Rest;
 using Infrastructure.Postgres;
 using NSwag.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,11 +54,34 @@ builder.Services.AddOpenApiDocument(config =>
 });
 
 // Add services from your other projects
-// builder.Services.AddApplicationServices();
+builder.Services.AddApplicationServices();
 builder.Services.AddPostgresInfrastructure(builder.Configuration);
 // builder.Services.AddWebSocketInfrastructure();
 builder.Services.AddRestApi();
 // builder.Services.AddWebSocketApi();
+
+// Right after builder.Services.AddRestApi(); add:
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = appOptions.JwtSettings.Issuer,
+        ValidAudience = appOptions.JwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(appOptions.JwtSettings.SecretKey))
+    };
+});
 
 var app = builder.Build();
 

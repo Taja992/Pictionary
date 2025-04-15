@@ -1,6 +1,6 @@
 using Core.Domain.Entities;
 
-namespace Application.Repositories;
+namespace Application.Interfaces.Repositories;
 
 public interface IScoreRepository
 {

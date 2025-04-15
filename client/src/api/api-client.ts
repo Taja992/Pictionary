@@ -10,6 +10,56 @@
  * ---------------------------------------------------------------
  */
 
+export interface GameDto {
+  id?: string;
+  roomId?: string;
+  status?: string;
+  /** @format int32 */
+  currentRound?: number;
+  /** @format int32 */
+  totalRounds?: number;
+  /** @format int32 */
+  roundTimeSeconds?: number;
+  /** @format date-time */
+  startTime?: string;
+  /** @format date-time */
+  roundStartTime?: string | null;
+  /** @format date-time */
+  endTime?: string | null;
+  currentDrawerId?: string | null;
+  currentWordId?: string | null;
+  scores?: ScoreDto[];
+}
+
+export interface ScoreDto {
+  userId?: string;
+  username?: string;
+  /** @format int32 */
+  points?: number;
+  /** @format int32 */
+  drawingPoints?: number;
+  /** @format int32 */
+  guessingPoints?: number;
+}
+
+export interface CreateGameRequest {
+  roomId?: string;
+  /** @format int32 */
+  rounds?: number;
+  /** @format int32 */
+  timePerRound?: number;
+}
+
+export interface AssignDrawerRequest {
+  userId?: string;
+}
+
+export interface WordDto {
+  id?: string;
+  text?: string;
+  category?: string | null;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -195,6 +245,142 @@ export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationCreateGame
+     * @request POST:/api/games
+     * @secure
+     */
+    gameOrchestrationCreateGame: (
+      data: CreateGameRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<GameDto, any>({
+        path: `/api/games`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationStartGame
+     * @request PUT:/api/games/{gameId}/start
+     * @secure
+     */
+    gameOrchestrationStartGame: (gameId: string, params: RequestParams = {}) =>
+      this.request<GameDto, any>({
+        path: `/api/games/${gameId}/start`,
+        method: "PUT",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationStartRound
+     * @request PUT:/api/games/{gameId}/rounds/start
+     * @secure
+     */
+    gameOrchestrationStartRound: (gameId: string, params: RequestParams = {}) =>
+      this.request<GameDto, any>({
+        path: `/api/games/${gameId}/rounds/start`,
+        method: "PUT",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationEndRound
+     * @request PUT:/api/games/{gameId}/rounds/end
+     * @secure
+     */
+    gameOrchestrationEndRound: (gameId: string, params: RequestParams = {}) =>
+      this.request<GameDto, any>({
+        path: `/api/games/${gameId}/rounds/end`,
+        method: "PUT",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationEndGame
+     * @request PUT:/api/games/{gameId}/end
+     * @secure
+     */
+    gameOrchestrationEndGame: (gameId: string, params: RequestParams = {}) =>
+      this.request<GameDto, any>({
+        path: `/api/games/${gameId}/end`,
+        method: "PUT",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationAssignDrawer
+     * @request PUT:/api/games/{gameId}/drawer
+     * @secure
+     */
+    gameOrchestrationAssignDrawer: (
+      gameId: string,
+      data: AssignDrawerRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<File, any>({
+        path: `/api/games/${gameId}/drawer`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationSelectWord
+     * @request GET:/api/games/{gameId}/word
+     * @secure
+     */
+    gameOrchestrationSelectWord: (
+      gameId: string,
+      query?: {
+        category?: string | null;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<WordDto, any>({
+        path: `/api/games/${gameId}/word`,
+        method: "GET",
+        query: query,
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *

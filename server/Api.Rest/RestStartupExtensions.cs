@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
+using System.Reflection;
 
 namespace Api.Rest
 {
@@ -12,6 +13,8 @@ namespace Api.Rest
             // Exception handling will be added here when you create the GlobalExceptionHandler
             // services.AddExceptionHandler<GlobalExceptionHandler>();
             services.AddProblemDetails();
+
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             var controllersAssembly = typeof(RestStartupExtensions).Assembly;
             services.AddControllers().AddApplicationPart(controllersAssembly);
