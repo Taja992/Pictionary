@@ -1,4 +1,4 @@
-using Application.Interfaces.Infrastructure.Websocket;
+using Application.Interfaces.WebsocketInterfaces;
 
 namespace Api.WebSocket.Handlers;
 

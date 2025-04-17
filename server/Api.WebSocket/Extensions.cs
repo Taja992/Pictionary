@@ -1,13 +1,11 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Application.Interfaces.Infrastructure.Websocket;
 using Microsoft.AspNetCore.Http;
 using Api.WebSocket.Handlers;
+using Application.Interfaces.WebsocketInterfaces;
 
 namespace Api.WebSocket;
-
-
 
 public static class Extensions
 {
@@ -25,7 +23,7 @@ public static class Extensions
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    var handler = context.RequestServices.GetService<IWebSocketHandler>();
+                    var handler = context.RequestServices.GetRequiredService<IWebSocketHandler>(); // Changed GetService to GetRequiredService
                     await handler.ProcessWebSocketAsync(context);
                 }
                 else
@@ -45,7 +43,7 @@ public static class Extensions
     public static IServiceCollection AddWebSocketApi(this IServiceCollection services)
     {
         services.AddScoped<IDrawEventHandler, DrawEventHandler>();
-        services.AddScoped<IGuessEventHandler, GuessEventHandler>();
+        services.AddScoped<IChatEventHandler, ChatEventHandler>(); 
         // Add other event handlers
         
         return services;

@@ -1,4 +1,4 @@
-namespace Application.Interfaces.Infrastructure.Websocket;
+namespace Application.Interfaces.WebsocketInterfaces;
 
 public interface IGuessEventHandler
 {

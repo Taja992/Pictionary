@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Application.Interfaces.Infrastructure.Websocket;
+namespace Application.Interfaces.WebsocketInterfaces;
 
 public interface IConnectionManager
 {
@@ -15,5 +15,5 @@ public interface IConnectionManager
     Task<List<string>> GetMembersFromTopicId(string topic);
     Task<List<string>> GetTopicsFromMemberId(string memberId);
     public string GetClientIdFromSocket(object socket);
-    public object GetSocketFromClientId(string clientId);
+    public object? GetSocketFromClientId(string clientId); // Updated to nullable
 }

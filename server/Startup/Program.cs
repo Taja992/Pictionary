@@ -9,6 +9,8 @@ using NSwag.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Api.WebSocket;
+using Infrastructure.WebSocket;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,9 +58,9 @@ builder.Services.AddOpenApiDocument(config =>
 // Add services from your other projects
 builder.Services.AddApplicationServices();
 builder.Services.AddPostgresInfrastructure(builder.Configuration);
-// builder.Services.AddWebSocketInfrastructure();
+builder.Services.AddWebSocketInfrastructure();
 builder.Services.AddRestApi();
-// builder.Services.AddWebSocketApi();
+builder.Services.AddWebSocketApi();
 
 // Right after builder.Services.AddRestApi(); add:
 
@@ -105,7 +107,7 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// app.UseStaticFiles();
 
 // Configure WebSockets
 // app.UseWebSockets(new WebSocketOptions
@@ -114,7 +116,8 @@ app.UseStaticFiles();
 // });
 app.UseRestApi();
 app.UseRouting();
-
+app.UseWebSockets();
+app.UseWebSocketApi();
 app.UseAuthentication();
 app.UseAuthorization();
 
