@@ -1,57 +1,46 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
 import { ROUTES } from '../routes';
-import './HomePage.css';
+import { userAtom, navigationStateAtom } from '../atoms';
+import {
+  HomeContainer,
+  HomeTitle,
+  HomeDescription,
+  NameForm
+} from '../components/Home';
+import '../components/home/home.css';
 
 export default function HomePage() {
-  const [playerName, setPlayerName] = useState('');
   const navigate = useNavigate();
+  const [user, setUser] = useAtom(userAtom);
+  const [navState, setNavState] = useAtom(navigationStateAtom);
   
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (playerName.trim()) {
-      // In a real app, you'd save the name to state/localStorage
-      localStorage.setItem('playerName', playerName);
-      navigate(ROUTES.ROOMS);
-    }
+  const handleSubmit = (playerName: string) => {
+    // Save the name to localStorage
+    localStorage.setItem('playerName', playerName);
+    
+    // Update user atom with name
+    setUser({
+      ...user,
+      name: playerName
+    });
+    
+    // Update navigation state
+    setNavState({
+      previousRoute: navState.currentRoute,
+      currentRoute: ROUTES.ROOMS
+    });
+    
+    navigate(ROUTES.ROOMS);
   };
   
   return (
-    <div className="home-container">
-      <div className="home-content">
-        <h1 className="home-title">Pictionary Online</h1>
-        <p className="home-description">
-          Draw, guess, and have fun with friends in this multiplayer drawing and guessing game!
-        </p>
-        
-        <form onSubmit={handleSubmit} className="home-form">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">What's your name?</span>
-            </label>
-            <input 
-              type="text" 
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="input input-bordered name-input" 
-              placeholder="Enter your name"
-              maxLength={20}
-              required
-            />
-          </div>
-          
-          <div className="button-group">
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={!playerName.trim()}
-            >
-              Play!
-            </button>
-            <button type="button" className="btn btn-outline">How to Play</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <HomeContainer>
+      <HomeTitle title="Pictionary Online" />
+      <HomeDescription 
+        text="Draw, guess, and have fun with friends in this multiplayer drawing and guessing game!"
+      />
+      <NameForm onSubmit={handleSubmit} />
+    </HomeContainer>
   );
 }

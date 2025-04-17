@@ -6,7 +6,7 @@ import MainLayout from './pages/Layout/MainLayout';
 
 // Pages
 import HomePage from './pages/HomePage';
-import RoomsPage from './pages/RoomsPage';
+import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -23,7 +23,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.ROOMS,
-        element: <RoomsPage />
+        element: <LobbyPage />
       },
       {
         path: ROUTES.ROOM_DETAIL, 
