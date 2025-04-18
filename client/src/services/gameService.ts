@@ -1,5 +1,5 @@
 import { Api } from '../api/api-client';
-import { atom } from 'jotai';
+
 
 // Initialize API client
 const apiClient = new Api({
@@ -80,6 +80,3 @@ export const selectWord = async (gameId: string, category?: string) => {
     throw error;
   }
 };
-
-// Api connection status atom
-export const apiStatusAtom = atom<'connected' | 'error' | 'connecting'>('connecting');

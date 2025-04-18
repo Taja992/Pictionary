@@ -9,11 +9,11 @@ public interface IConnectionManager
 
     Task OnOpen(object socket, string clientId);
     Task OnClose(object socket, string clientId);
-    Task AddToTopic(string topic, string memberId);
-    Task RemoveFromTopic(string topic, string memberId);
-    Task BroadcastToTopic<TMessage>(string topic, TMessage message) where TMessage : class;
-    Task<List<string>> GetMembersFromTopicId(string topic);
-    Task<List<string>> GetTopicsFromMemberId(string memberId);
+    Task AddToRoom(string room, string clientId);
+    Task RemoveFromRoom(string room, string clientId);
+    Task BroadcastToRoom<TMessage>(string room, TMessage message) where TMessage : class;
+    Task<List<string>> GetClientsFromRoomId(string room);
+    Task<List<string>> GetRoomsFromClientId(string clientId);
     public string GetClientIdFromSocket(object socket);
     public object? GetSocketFromClientId(string clientId); // Updated to nullable
 }

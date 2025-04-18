@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Stage, Layer, Line } from 'react-konva';
+import { useAtom } from 'jotai';
+import { userAtom } from '../../atoms';
+import { websocketClient } from '../../api/websocket-client';
+import { MessageType } from '../../api/websocket-types';
 import DrawingTools from './DrawingTools';
 
 interface LineProps {
@@ -10,9 +14,14 @@ interface LineProps {
 
 interface DrawingCanvasProps {
   isDrawer: boolean;
+  roomId: string;
 }
 
-export default function DrawingCanvas({ isDrawer }: DrawingCanvasProps) {
+export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) {
+  // Get current user
+  const [user] = useAtom(userAtom);
+  const username = user.name || 'Anonymous';
+  
   // Drawing state
   const [lines, setLines] = useState<LineProps[]>([]);
   const [currentLine, setCurrentLine] = useState<number[]>([]);
@@ -45,6 +54,39 @@ export default function DrawingCanvas({ isDrawer }: DrawingCanvasProps) {
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
 
+  // Listen for drawing events from other users
+  useEffect(() => {
+    // Handle draw events
+    const handleDrawEvent = (data: any) => {
+      if (data.Username !== username) { // Only process if from another user
+        const newLine = {
+          points: data.LineData.points,
+          stroke: data.LineData.stroke,
+          strokeWidth: data.LineData.strokeWidth
+        };
+        
+        setLines(prevLines => [...prevLines, newLine]);
+      }
+    };
+    
+    // Handle clear canvas events
+    const handleClearCanvas = (data: any) => {
+      if (data.Username !== username) { // Only process if from another user
+        setLines([]);
+      }
+    };
+    
+    // Subscribe to events
+    websocketClient.on(MessageType.DRAW_EVENT, handleDrawEvent);
+    websocketClient.on(MessageType.CLEAR_CANVAS, handleClearCanvas);
+    
+    // Cleanup
+    return () => {
+      websocketClient.off(MessageType.DRAW_EVENT, handleDrawEvent);
+      websocketClient.off(MessageType.CLEAR_CANVAS, handleClearCanvas);
+    };
+  }, [username]);
+
   // Drawing functions
   const handleMouseDown = (e: any) => {
     if (!isDrawer) return; // Only allow drawing if user is the drawer
@@ -75,10 +117,11 @@ export default function DrawingCanvas({ isDrawer }: DrawingCanvasProps) {
         strokeWidth: currentStrokeWidth
       };
       
+      // Add line to local state
       setLines([...lines, newLine]);
       
-      // Here you would send the line via WebSocket
-      // sendDrawingToServer(newLine);
+      // Send the line via WebSocket
+      websocketClient.sendDrawEvent(newLine, username, roomId);
       
       setCurrentLine([]);
     }
@@ -95,6 +138,7 @@ export default function DrawingCanvas({ isDrawer }: DrawingCanvasProps) {
   const handleClearCanvas = () => {
     setLines([]);
     // Send clear canvas command via WebSocket
+    websocketClient.sendClearCanvas(username, roomId);
   };
 
   return (

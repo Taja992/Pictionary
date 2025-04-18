@@ -116,7 +116,7 @@ public class WebSocketHandler : IWebSocketHandler
                     var joinRoomDto = JsonSerializer.Deserialize<JoinRoomDto>(message);
                     if (joinRoomDto != null && !string.IsNullOrEmpty(joinRoomDto.RoomId))
                     {
-                        await _connectionManager.AddToTopic(joinRoomDto.RoomId, clientId);
+                        await _connectionManager.AddToRoom(joinRoomDto.RoomId, clientId);
                     }
                     break;
                     
