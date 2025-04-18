@@ -60,6 +60,54 @@ export interface WordDto {
   category?: string | null;
 }
 
+export interface RoomDto {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  ownerName?: string;
+  /** @format int32 */
+  playerCount?: number;
+  /** @format int32 */
+  maxPlayers?: number;
+  isPrivate?: boolean;
+  status?: string;
+  players?: PlayerDto[];
+  currentGameId?: string | null;
+  /** @format date-time */
+  createdAt?: string;
+}
+
+export interface PlayerDto {
+  id?: string;
+  name?: string;
+  isOnline?: boolean;
+}
+
+export interface CreateRoomRequest {
+  name?: string;
+  username?: string;
+  isPrivate?: boolean;
+  password?: string | null;
+}
+
+export interface JoinRoomRequest {
+  userId?: string;
+  password?: string | null;
+}
+
+export interface UserDto {
+  id?: string;
+  username?: string;
+  /** @format int32 */
+  totalGamesPlayed?: number;
+  /** @format int32 */
+  totalGamesWon?: number;
+}
+
+export interface TempUserRequest {
+  username?: string;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -384,6 +432,94 @@ export class Api<
     /**
      * No description
      *
+     * @tags Room
+     * @name RoomGetRooms
+     * @request GET:/api/Room
+     */
+    roomGetRooms: (params: RequestParams = {}) =>
+      this.request<RoomDto[], any>({
+        path: `/api/Room`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Room
+     * @name RoomCreateRoom
+     * @request POST:/api/Room
+     */
+    roomCreateRoom: (data: CreateRoomRequest, params: RequestParams = {}) =>
+      this.request<RoomDto, any>({
+        path: `/api/Room`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Room
+     * @name RoomGetRoom
+     * @request GET:/api/Room/{id}
+     */
+    roomGetRoom: (id: string, params: RequestParams = {}) =>
+      this.request<RoomDto, any>({
+        path: `/api/Room/${id}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Room
+     * @name RoomJoinRoom
+     * @request POST:/api/Room/{id}/join
+     */
+    roomJoinRoom: (
+      id: string,
+      data: JoinRoomRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<File, any>({
+        path: `/api/Room/${id}/join`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Room
+     * @name RoomLeaveRoom
+     * @request POST:/api/Room/{id}/leave
+     */
+    roomLeaveRoom: (
+      id: string,
+      query?: {
+        userId?: string;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<File, any>({
+        path: `/api/Room/${id}/leave`,
+        method: "POST",
+        query: query,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @tags Test
      * @name TestGet
      * @request GET:/api/Test
@@ -391,6 +527,41 @@ export class Api<
     testGet: (params: RequestParams = {}) =>
       this.request<string, any>({
         path: `/api/Test`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags User
+     * @name UserRegisterTemporaryUser
+     * @request POST:/api/User/register-temp
+     */
+    userRegisterTemporaryUser: (
+      data: TempUserRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<UserDto, any>({
+        path: `/api/User/register-temp`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags User
+     * @name UserGetUser
+     * @request GET:/api/User/{id}
+     */
+    userGetUser: (id: string, params: RequestParams = {}) =>
+      this.request<UserDto, any>({
+        path: `/api/User/${id}`,
         method: "GET",
         format: "json",
         ...params,

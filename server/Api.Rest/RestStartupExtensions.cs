@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using System.Reflection;
 
+
 namespace Api.Rest
 {
     public static class RestStartupExtensions
@@ -15,6 +16,10 @@ namespace Api.Rest
             services.AddProblemDetails();
 
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+                        
+
+
+            
 
             var controllersAssembly = typeof(RestStartupExtensions).Assembly;
             services.AddControllers().AddApplicationPart(controllersAssembly);

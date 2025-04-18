@@ -13,6 +13,9 @@ public static class ApplicationExtensions
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IDrawingPersistenceService, DrawingPersistenceService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddHostedService<TempUserCleanupService>();
+
         
         return services;
     }
