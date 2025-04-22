@@ -20,7 +20,7 @@ interface DrawingCanvasProps {
 export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) {
   // Get current user
   const [user] = useAtom(userAtom);
-  const username = user.name || 'Anonymous';
+  const username = user.username || 'Anonymous';
   
   // Drawing state
   const [lines, setLines] = useState<LineProps[]>([]);

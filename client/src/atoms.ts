@@ -1,9 +1,5 @@
 import { atom } from 'jotai';
-import { RoomDto, UserDto } from './api/api-client';
-
-
-
-
+import { RoomDto, UserDto, GameDto, PlayerDto } from './api/api-client';
 
 
 // All Rooms
@@ -11,6 +7,9 @@ export const roomsListAtom = atom<RoomDto[]>([]);
 
 // Current Room
 export const currentRoomAtom = atom<RoomDto | null>(null);
+
+// Current Game
+export const currentGameAtom = atom<GameDto | null>(null);
 
 
 // Check room owner
@@ -32,69 +31,11 @@ const defaultUser: UserDto = {
 export const userAtom = atom<UserDto>(defaultUser);
 
 
+// Players List
+export const playersAtom = atom<PlayerDto[]>([]);
 
-
-
-
-
-
-
-// --- Game Settings ---
-interface GameSettings {
-  rounds: number;
-  timePerRound: number;
-  categories: string[];
-}
-
-export const gameSettingsAtom = atom<GameSettings>({
-  rounds: 3,
-  timePerRound: 60,
-  categories: ['Animals', 'Food', 'Sports', 'Movies', 'Mixed']
-});
-
-// --- Current Game State ---
-interface CurrentGame {
-  roomId: string | null;
-  gameId: string | null;
-  status: 'waiting' | 'playing' | 'finished' | null;
-  currentRound: number;
-  totalRounds: number;
-  timeLeft: number;
-  currentWord: string | null;
-  isDrawer: boolean;
-}
-
-export const currentGameAtom = atom<CurrentGame>({
-  roomId: null,
-  gameId: null,
-  status: null,
-  currentRound: 0,
-  totalRounds: 0,
-  timeLeft: 0,
-  currentWord: null,
-  isDrawer: false
-});
-
-// --- Navigation State ---
-interface NavigationState {
-  previousRoute: string | null;
-  currentRoute: string;
-}
-
-export const navigationStateAtom = atom<NavigationState>({
-  previousRoute: null,
-  currentRoute: '/'
-});
-
-// --- Players List ---
-interface Player {
-  id: string;
-  name: string;
-  score: number;
-  isDrawing: boolean;
-}
-
-export const playersAtom = atom<Player[]>([]);
+// Current drawer
+export const currentDrawerAtom = atom<PlayerDto | null>(null);
 
 // --- Chat Messages ---
 interface Message {

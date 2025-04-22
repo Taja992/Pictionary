@@ -80,6 +80,23 @@ public class GameOrchestrationService : IGameOrchestrationService
         return game;
     }
 
+    public async Task<Game?> GetCurrentGameForRoomAsync(string roomId)
+{
+    var room = await _roomRepository.GetByIdAsync(roomId);
+    if (room == null)
+    {
+        throw new Exception($"Room with ID {roomId} not found");
+    }
+
+    // Get the current game for the room from the repository
+    var currentGame = await _gameRepository.GetCurrentGameForRoomAsync(roomId);
+    
+    _logger.LogInformation("Retrieved current game for room {RoomId}: {GameId}", 
+        roomId, currentGame?.Id ?? "No active game");
+    
+    return currentGame;
+}
+
     public async Task<Game> StartGameAsync(string gameId)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
@@ -251,5 +268,47 @@ public class GameOrchestrationService : IGameOrchestrationService
                 await _userRepository.UpdateAsync(user);
             }
         }
+    }
+        public async Task<bool> AddPlayerToGameAsync(string gameId, string userId)
+    {
+        var game = await _gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            _logger.LogWarning("Cannot add player {UserId} to game {GameId} - game not found", userId, gameId);
+            return false;
+        }
+    
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Cannot add player {UserId} to game {GameId} - user not found", userId, gameId);
+            return false;
+        }
+    
+        // // Check if player is already in the game (has a score entry)
+        // var existingScore = await _scoreRepository.GetScoreAsync(gameId, userId);
+        // if (existingScore != null)
+        // {
+        //     _logger.LogInformation("Player {UserId} already has a score in game {GameId}", userId, gameId);
+        //     return true; // Player is already in the game
+        // }
+    
+        // // Create a new score entry for the player
+        // var score = new Score
+        // {
+        //     Id = Guid.NewGuid().ToString(),
+        //     GameId = gameId,
+        //     UserId = userId,
+        //     Points = 0,
+        //     DrawingPoints = 0,
+        //     GuessingPoints = 0,
+        //     RoundNumber = game.CurrentRound,
+        //     UpdatedAt = DateTime.UtcNow
+        // };
+    
+        // await _scoreRepository.CreateAsync(score);
+        
+        _logger.LogInformation("Added player {UserId} to game {GameId}", userId, gameId);
+        return true;
     }
 }

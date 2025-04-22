@@ -9,5 +9,5 @@ public enum JoinRoomResult
     IncorrectPassword,
     RoomFull,
     AlreadyJoined,
-    GameInProgress
+    // GameInProgress
 }

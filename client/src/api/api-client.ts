@@ -93,6 +93,7 @@ export interface CreateRoomRequest {
 export interface JoinRoomRequest {
   userId?: string;
   password?: string | null;
+  joinGame?: boolean;
 }
 
 export interface UserDto {
@@ -299,7 +300,6 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationCreateGame
      * @request POST:/api/games
-     * @secure
      */
     gameOrchestrationCreateGame: (
       data: CreateGameRequest,
@@ -309,7 +309,6 @@ export class Api<
         path: `/api/games`,
         method: "POST",
         body: data,
-        secure: true,
         type: ContentType.Json,
         format: "json",
         ...params,
@@ -321,13 +320,11 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationStartGame
      * @request PUT:/api/games/{gameId}/start
-     * @secure
      */
     gameOrchestrationStartGame: (gameId: string, params: RequestParams = {}) =>
       this.request<GameDto, any>({
         path: `/api/games/${gameId}/start`,
         method: "PUT",
-        secure: true,
         format: "json",
         ...params,
       }),
@@ -338,13 +335,11 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationStartRound
      * @request PUT:/api/games/{gameId}/rounds/start
-     * @secure
      */
     gameOrchestrationStartRound: (gameId: string, params: RequestParams = {}) =>
       this.request<GameDto, any>({
         path: `/api/games/${gameId}/rounds/start`,
         method: "PUT",
-        secure: true,
         format: "json",
         ...params,
       }),
@@ -355,13 +350,11 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationEndRound
      * @request PUT:/api/games/{gameId}/rounds/end
-     * @secure
      */
     gameOrchestrationEndRound: (gameId: string, params: RequestParams = {}) =>
       this.request<GameDto, any>({
         path: `/api/games/${gameId}/rounds/end`,
         method: "PUT",
-        secure: true,
         format: "json",
         ...params,
       }),
@@ -372,13 +365,11 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationEndGame
      * @request PUT:/api/games/{gameId}/end
-     * @secure
      */
     gameOrchestrationEndGame: (gameId: string, params: RequestParams = {}) =>
       this.request<GameDto, any>({
         path: `/api/games/${gameId}/end`,
         method: "PUT",
-        secure: true,
         format: "json",
         ...params,
       }),
@@ -389,7 +380,6 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationAssignDrawer
      * @request PUT:/api/games/{gameId}/drawer
-     * @secure
      */
     gameOrchestrationAssignDrawer: (
       gameId: string,
@@ -400,7 +390,6 @@ export class Api<
         path: `/api/games/${gameId}/drawer`,
         method: "PUT",
         body: data,
-        secure: true,
         type: ContentType.Json,
         ...params,
       }),
@@ -411,7 +400,6 @@ export class Api<
      * @tags GameOrchestration
      * @name GameOrchestrationSelectWord
      * @request GET:/api/games/{gameId}/word
-     * @secure
      */
     gameOrchestrationSelectWord: (
       gameId: string,
@@ -424,7 +412,24 @@ export class Api<
         path: `/api/games/${gameId}/word`,
         method: "GET",
         query: query,
-        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags GameOrchestration
+     * @name GameOrchestrationGetCurrentGameForRoom
+     * @request GET:/api/games/room/{roomId}
+     */
+    gameOrchestrationGetCurrentGameForRoom: (
+      roomId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<GameDto, any>({
+        path: `/api/games/room/${roomId}`,
+        method: "GET",
         format: "json",
         ...params,
       }),

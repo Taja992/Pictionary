@@ -10,15 +10,19 @@ public class RoomService : IRoomService
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IGameOrchestrationService _gameService;
     private readonly ILogger<RoomService> _logger;
+
 
     public RoomService(
         IRoomRepository roomRepository,
         IUserRepository userRepository,
+        IGameOrchestrationService gameService,
         ILogger<RoomService> logger)
     {
         _roomRepository = roomRepository;
         _userRepository = userRepository;
+        _gameService = gameService;
         _logger = logger;
     }
 
@@ -62,7 +66,7 @@ public class RoomService : IRoomService
         return await _roomRepository.GetByIdAsync(roomId);
     }
 
-    public async Task<JoinRoomResult> JoinRoomAsync(string roomId, string userId, string? password = null)
+    public async Task<JoinRoomResult> JoinRoomAsync(string roomId, string userId, string? password = null, bool joinGame = true)
     {
         _logger.LogInformation("User {UserId} is joining room: {RoomId}", userId, roomId);
         
@@ -87,17 +91,24 @@ public class RoomService : IRoomService
         // Check if the player is already in the room
         if (room.Players.Any(p => p.Id == userId))
         {
+            // Player is already in the room
+            // If there's an active game and joinGame is true, make sure they're also in the game
+            if (joinGame && room.CurrentGame != null && room.Status == RoomStatus.Playing)
+            {
+                await _gameService.AddPlayerToGameAsync(room.CurrentGame.Id, userId);
+            }
             return JoinRoomResult.AlreadyJoined;
-        }
-        
-        // Check if game is already in progress
-        if (room.Status == RoomStatus.Playing)
-        {
-            return JoinRoomResult.GameInProgress;
         }
         
         // Add player to room
         await _roomRepository.AddPlayerToRoomAsync(roomId, userId);
+        
+        // If there's an active game and joinGame is true, add the player to the game
+        if (joinGame && room.CurrentGame != null && room.Status == RoomStatus.Playing)
+        {
+            await _gameService.AddPlayerToGameAsync(room.CurrentGame.Id, userId);
+        }
+        
         return JoinRoomResult.Success;
     }
 

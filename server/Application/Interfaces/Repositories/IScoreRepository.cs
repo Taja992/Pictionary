@@ -11,4 +11,5 @@ public interface IScoreRepository
     Task<string> CreateAsync(Score score, CancellationToken cancellationToken = default);
     Task UpdateAsync(Score score, CancellationToken cancellationToken = default);
     Task DeleteAsync(string id, CancellationToken cancellationToken = default);
+
 }

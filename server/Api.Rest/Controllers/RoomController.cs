@@ -90,7 +90,11 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var result = await _roomService.JoinRoomAsync(id, request.UserId, request.Password);
+            var result = await _roomService.JoinRoomAsync(
+                id, 
+                request.UserId, 
+                request.Password, 
+                request.JoinGame);
             
             return result switch
             {
@@ -99,7 +103,6 @@ public class RoomController : ControllerBase
                 JoinRoomResult.IncorrectPassword => BadRequest("Incorrect password"),
                 JoinRoomResult.RoomFull => BadRequest("Room is full"),
                 JoinRoomResult.AlreadyJoined => BadRequest("Already joined this room"),
-                JoinRoomResult.GameInProgress => BadRequest("Game already in progress"),
                 _ => StatusCode(500, "Unknown error")
             };
         }

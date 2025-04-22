@@ -289,3 +289,88 @@
     height: 250px;
   }
 }
+
+/* Add these new styles */
+
+.game-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(var(--b2));
+  border-radius: 0.5rem;
+  padding: 1rem;
+  min-height: 400px;
+}
+
+.waiting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 2rem;
+}
+
+.waiting-message {
+  color: hsl(var(--bc) / 0.7);
+}
+
+.create-game-form {
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+  background-color: hsl(var(--b1));
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.create-game-form h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid hsl(var(--bc) / 0.2);
+  border-radius: 0.25rem;
+}
+
+.canvas-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(var(--b3));
+  border-radius: 0.25rem;
+  color: hsl(var(--bc) / 0.6);
+}
+
+.placeholder-text {
+  font-style: italic;
+}
+
+.room-name {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.game-status {
+  color: hsl(var(--bc) / 0.7);
+  font-style: italic;
+}

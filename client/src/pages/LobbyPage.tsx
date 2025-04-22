@@ -33,9 +33,6 @@ export default function LobbyPage() {
 
     fetchRooms();
     
-    // Optional: Add polling to refresh rooms every 10 seconds
-    const interval = setInterval(fetchRooms, 10000);
-    return () => clearInterval(interval);
   }, [setRooms]);
 
   const handleCreateRoom = () => {
@@ -65,7 +62,7 @@ export default function LobbyPage() {
       toast.success('Room created successfully!');
       
       // Navigate to the new room
-      navigate(`/games/${newRoom.id}`);
+      navigate(`/rooms/${newRoom.id}`);
       
     } catch (err) {
       console.error('Error creating room:', err);

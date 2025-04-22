@@ -7,10 +7,9 @@ import MainLayout from './pages/Layout/MainLayout';
 // Pages
 import HomePage from './pages/HomePage';
 import LobbyPage from './pages/LobbyPage';
-import GamePage from './pages/GamePage';
+import RoomPage from './pages/RoomPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Create router with route configurations
 export const router = createBrowserRouter([
   {
     path: ROUTES.HOME,
@@ -27,7 +26,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.ROOM_DETAIL, 
-        element: <GamePage />
+        element: <RoomPage />
       }
     ]
   }
