@@ -1,15 +1,22 @@
 import { Outlet, Link } from 'react-router-dom';
 import WebSocketConnectionIndicator from './WebSocketConnectionIndicator';
 import { ROUTES } from '../../routes';
+import { useAtom } from 'jotai';
+import { userAtom } from '../../atoms';
 import './MainLayout.css';
 
 export default function MainLayout() {
+    const [user] = useAtom(userAtom);
+
   return (
     <div className="layout-container">
       {/* Header */}
       <header className="layout-header">
         <div className="header-content">
           <h1 className="header-title">Pictionary</h1>
+          <h2 className="header-subtitle">
+          {user.username ? `Welcome, ${user.username}!` : 'Welcome!'}
+          </h2>
           <WebSocketConnectionIndicator />
         </div>
       </header>

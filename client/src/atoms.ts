@@ -1,19 +1,43 @@
 import { atom } from 'jotai';
+import { RoomDto, UserDto } from './api/api-client';
 
-// --- User Authentication State ---
-interface User {
-  id: string;
-  name: string;
-  isAuthenticated: boolean;
-}
 
-const defaultUser: User = {
-  id: '',
-  name: localStorage.getItem('playerName') || '',
-  isAuthenticated: false
+
+
+
+
+// All Rooms
+export const roomsListAtom = atom<RoomDto[]>([]);
+
+// Current Room
+export const currentRoomAtom = atom<RoomDto | null>(null);
+
+
+// Check room owner
+export const isRoomOwnerAtom = atom((get) => {
+  const user = get(userAtom);
+  const room = get(currentRoomAtom);
+  return user.id === room?.ownerId;
+})
+
+// Define a default/initial user state
+const defaultUser: UserDto = {
+  id: undefined,
+  username: undefined,
+  totalGamesPlayed: 0,
+  totalGamesWon: 0
 };
 
-export const userAtom = atom<User>(defaultUser);
+// Create the user atom
+export const userAtom = atom<UserDto>(defaultUser);
+
+
+
+
+
+
+
+
 
 // --- Game Settings ---
 interface GameSettings {

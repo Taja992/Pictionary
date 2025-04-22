@@ -24,7 +24,6 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
         return await _dbSet
             .Include(r => r.Owner)
             .Include(r => r.Players)
-            .Where(r => r.Status == RoomStatus.Waiting && !r.IsPrivate)
             .ToListAsync(cancellationToken);
     }
 

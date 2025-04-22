@@ -63,7 +63,7 @@ export default function GamePage() {
             initialMessages={messages} 
             onSendMessage={handleSendMessage} 
             roomId={roomId || ''} 
-            username={user.name} 
+            username={user.username || ''} 
           />
         </div>
       </GameContainer>
