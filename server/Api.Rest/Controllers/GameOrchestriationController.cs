@@ -1,8 +1,6 @@
 using Api.Rest.DTOs.Game;
 using Application.Interfaces.Services;
 using AutoMapper;
-using Core.Domain.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -36,54 +34,12 @@ public class GameOrchestrationController(
         }
     }
 
-    // [HttpPut("{gameId}/start")]
-    // public async Task<ActionResult<GameDto>> StartGame(string gameId)
-    // {
-    //     try
-    //     {
-    //         var game = await _gameService.StartGameAsync(gameId);
-    //         return Ok(_mapper.Map<GameDto>(game));
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return BadRequest(ex.Message);
-    //     }
-    // }
-
-    // [HttpPut("{gameId}/rounds/start")]
-    // public async Task<ActionResult<GameDto>> StartRound(string gameId)
-    // {
-    //     try
-    //     {
-    //         var game = await _gameService.StartRoundAsync(gameId);
-    //         return Ok(_mapper.Map<GameDto>(game));
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return BadRequest(ex.Message);
-    //     }
-    // }
-
     [HttpPut("{gameId}/rounds/end")]
     public async Task<ActionResult<GameDto>> EndRound(string gameId)
     {
         try
         {
             var game = await _gameService.EndRoundAsync(gameId);
-            return Ok(_mapper.Map<GameDto>(game));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    [HttpPut("{gameId}/end")]
-    public async Task<ActionResult<GameDto>> EndGame(string gameId)
-    {
-        try
-        {
-            var game = await _gameService.EndGameAsync(gameId);
             return Ok(_mapper.Map<GameDto>(game));
         }
         catch (Exception ex)

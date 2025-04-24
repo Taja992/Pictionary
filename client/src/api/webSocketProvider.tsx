@@ -5,10 +5,11 @@ import { userAtom, webSocketStatusAtom } from '../atoms';
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
-  roomId: string;
+  roomId?: string;
 }
 
 export default function WebSocketProvider({ children, roomId }: WebSocketProviderProps) {
+  
   const [user] = useAtom(userAtom);
   const [wsStatus] = useAtom(webSocketStatusAtom);
   const hasJoinedRef = useRef(false);

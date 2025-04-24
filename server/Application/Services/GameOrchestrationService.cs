@@ -14,6 +14,8 @@ public class GameOrchestrationService : IGameOrchestrationService
     private readonly IScoreRepository _scoreRepository;
     private readonly ILogger<GameOrchestrationService> _logger;
 
+    private static readonly Dictionary<string, CancellationTokenSource> _gameTimers = new();
+
     public GameOrchestrationService(
         IGameRepository gameRepository,
         IRoomRepository roomRepository,
@@ -77,45 +79,57 @@ public class GameOrchestrationService : IGameOrchestrationService
             await _scoreRepository.CreateAsync(score);
         }
 
+        // Automatically start the game
+        _ = StartGameAutomaticallyAsync(game.Id);
+
         return game;
     }
 
-    public async Task<Game?> GetCurrentGameForRoomAsync(string roomId)
-{
-    var room = await _roomRepository.GetByIdAsync(roomId);
-    if (room == null)
+    private async Task StartGameAutomaticallyAsync(string gameId)
     {
-        throw new Exception($"Room with ID {roomId} not found");
+        try
+        {
+            // Wait 2 seconds before starting the game to allow clients to initialize
+            await Task.Delay(2000);
+            
+            var game = await _gameRepository.GetByIdAsync(gameId);
+            if (game == null || game.Status == GameStatus.GameEnd)
+            {
+                _logger.LogWarning("Cannot start game {GameId} - game not found or already ended", gameId);
+                return;
+            }
+
+            // Create a cancellation token source for this game
+            var cts = new CancellationTokenSource();
+            _gameTimers[gameId] = cts;
+
+            // Start the first round
+            await StartRoundAsync(gameId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting game {GameId} automatically", gameId);
+        }
     }
 
-    // Get the current game for the room from the repository
-    var currentGame = await _gameRepository.GetCurrentGameForRoomAsync(roomId);
-    
-    _logger.LogInformation("Retrieved current game for room {RoomId}: {GameId}", 
-        roomId, currentGame?.Id ?? "No active game");
-    
-    return currentGame;
-}
-
-    public async Task<Game> StartGameAsync(string gameId)
+    public async Task<Game?> GetCurrentGameForRoomAsync(string roomId)
     {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        if (room == null)
         {
-            throw new Exception($"Game with ID {gameId} not found");
+            throw new Exception($"Room with ID {roomId} not found");
         }
 
-        // Update game status
-        game.Status = GameStatus.Starting;
-        await _gameRepository.UpdateAsync(game);
+        // Get the current game for the room from the repository
+        var currentGame = await _gameRepository.GetCurrentGameForRoomAsync(roomId);
         
-        _logger.LogInformation("Started game {GameId}", gameId);
-
-        // Start the first round
-        return await StartRoundAsync(gameId);
+        _logger.LogInformation("Retrieved current game for room {RoomId}: {GameId}", 
+            roomId, currentGame?.Id ?? "No active game");
+        
+        return currentGame;
     }
 
-    public async Task<Game> StartRoundAsync(string gameId)
+    private async Task<Game> StartRoundAsync(string gameId)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
@@ -136,7 +150,58 @@ public class GameOrchestrationService : IGameOrchestrationService
         
         _logger.LogInformation("Started round {Round} in game {GameId}", game.CurrentRound, gameId);
 
+        // Start the round timer
+        await StartRoundTimerAsync(gameId);
+
         return game;
+    }
+
+    private async Task StartRoundTimerAsync(string gameId)
+    {
+        try
+        {
+            if (!_gameTimers.TryGetValue(gameId, out var cts))
+            {
+                cts = new CancellationTokenSource();
+                _gameTimers[gameId] = cts;
+            }
+
+            var game = await _gameRepository.GetByIdAsync(gameId);
+            if (game == null)
+            {
+                _logger.LogWarning("Cannot start round timer - game {GameId} not found", gameId);
+                return;
+            }
+
+            // Start a timer for the round duration
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Wait for the round to complete
+                    await Task.Delay(game.RoundTimeSeconds * 1000, cts.Token);
+                    
+                    // End the round if it hasn't been ended already
+                    var currentGame = await _gameRepository.GetByIdAsync(gameId);
+                    if (currentGame != null && currentGame.Status == GameStatus.Drawing)
+                    {
+                        await EndRoundAsync(gameId);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // Timer was cancelled, nothing to do
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in round timer for game {GameId}", gameId);
+                }
+            }, cts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting round timer for game {GameId}", gameId);
+        }
     }
 
     public async Task<Game> EndRoundAsync(string gameId)
@@ -163,16 +228,51 @@ public class GameOrchestrationService : IGameOrchestrationService
         {
             return await EndGameAsync(gameId);
         }
+        else
+        {
+            // Start next round after delay
+            _ = StartNextRoundAfterDelayAsync(gameId);
+        }
 
         return game;
     }
 
-    public async Task<Game> EndGameAsync(string gameId)
+    private async Task StartNextRoundAfterDelayAsync(string gameId)
+    {
+        try
+        {
+            // Wait 8 seconds before starting the next round
+            await Task.Delay(8000);
+            
+            var game = await _gameRepository.GetByIdAsync(gameId);
+            if (game == null || game.Status == GameStatus.GameEnd)
+            {
+                _logger.LogWarning("Cannot start next round - game {GameId} not found or already ended", gameId);
+                return;
+            }
+
+            // Start the next round
+            await StartRoundAsync(gameId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting next round for game {GameId}", gameId);
+        }
+    }
+
+    private async Task<Game> EndGameAsync(string gameId)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
         {
             throw new Exception($"Game with ID {gameId} not found");
+        }
+
+        // Cancel any active timers for this game
+        if (_gameTimers.TryGetValue(gameId, out var cts))
+        {
+            cts.Cancel();
+            _gameTimers.Remove(gameId);
         }
 
         // Set game state to finished
@@ -264,7 +364,8 @@ public class GameOrchestrationService : IGameOrchestrationService
             }
         }
     }
-        public async Task<bool> AddPlayerToGameAsync(string gameId, string userId)
+
+    public async Task<bool> AddPlayerToGameAsync(string gameId, string userId)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
@@ -283,4 +384,26 @@ public class GameOrchestrationService : IGameOrchestrationService
         _logger.LogInformation("Added player {UserId} to game {GameId}", userId, gameId);
         return true;
     }
+
+    // private async Task<bool> ForceStopGameAsync(string gameId)
+    // {
+    //     try
+    //     {
+    //         // Cancel any active timers
+    //         if (_gameTimers.TryGetValue(gameId, out var cts))
+    //         {
+    //             cts.Cancel();
+    //             _gameTimers.Remove(gameId);
+    //         }
+            
+    //         // End the game
+    //         await EndGameAsync(gameId);
+    //         return true;
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _logger.LogError(ex, "Error force stopping game {GameId}", gameId);
+    //         return false;
+    //     }
+    // }
 }

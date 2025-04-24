@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
-import { currentGameAtom, currentRoomAtom } from '../../atoms';
-import { PlayerDto, ScoreDto } from '../../api/api-client';
+import { currentGameAtom } from '../../atoms';
+import { PlayerDto } from '../../api/api-client';
 
 interface PlayerListProps {
   players: PlayerDto[];

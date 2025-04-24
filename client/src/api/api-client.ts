@@ -320,57 +320,12 @@ export class Api<
      * No description
      *
      * @tags GameOrchestration
-     * @name GameOrchestrationStartGame
-     * @request PUT:/api/games/{gameId}/start
-     */
-    gameOrchestrationStartGame: (gameId: string, params: RequestParams = {}) =>
-      this.request<GameDto, any>({
-        path: `/api/games/${gameId}/start`,
-        method: "PUT",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
-     * @name GameOrchestrationStartRound
-     * @request PUT:/api/games/{gameId}/rounds/start
-     */
-    gameOrchestrationStartRound: (gameId: string, params: RequestParams = {}) =>
-      this.request<GameDto, any>({
-        path: `/api/games/${gameId}/rounds/start`,
-        method: "PUT",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
      * @name GameOrchestrationEndRound
      * @request PUT:/api/games/{gameId}/rounds/end
      */
     gameOrchestrationEndRound: (gameId: string, params: RequestParams = {}) =>
       this.request<GameDto, any>({
         path: `/api/games/${gameId}/rounds/end`,
-        method: "PUT",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
-     * @name GameOrchestrationEndGame
-     * @request PUT:/api/games/{gameId}/end
-     */
-    gameOrchestrationEndGame: (gameId: string, params: RequestParams = {}) =>
-      this.request<GameDto, any>({
-        path: `/api/games/${gameId}/end`,
         method: "PUT",
         format: "json",
         ...params,
