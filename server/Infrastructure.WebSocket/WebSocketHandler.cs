@@ -13,27 +13,35 @@ public class WebSocketHandler : IWebSocketHandler
     private readonly ILogger<WebSocketHandler> _logger;
     private readonly IDrawEventHandler _drawEventHandler;
     private readonly IChatEventHandler _chatEventHandler;
+    private readonly IRoomEventHandler _roomEventHandler;
 
     public WebSocketHandler(
         IConnectionManager connectionManager,
         ILogger<WebSocketHandler> logger,
         IDrawEventHandler drawEventHandler,
+        IRoomEventHandler roomEventHandler,
         IChatEventHandler chatEventHandler)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _drawEventHandler = drawEventHandler;
         _chatEventHandler = chatEventHandler;
+        _roomEventHandler = roomEventHandler;
     }
 
     public async Task ProcessWebSocketAsync(object context)
     {
         if (context is HttpContext httpContext && httpContext.WebSockets.IsWebSocketRequest)
         {
-            var webSocket = await httpContext.WebSockets.AcceptWebSocketAsync();
+
+            string userId = httpContext.Request.Query["userId"].ToString();
+            string username = httpContext.Request.Query["username"].ToString();
+
             string clientId = Guid.NewGuid().ToString();
+
+            var webSocket = await httpContext.WebSockets.AcceptWebSocketAsync();
             
-            await _connectionManager.OnOpen(webSocket, clientId);
+            await _connectionManager.OnOpen(webSocket, clientId, userId, username);
 
             try
             {
@@ -90,7 +98,7 @@ public class WebSocketHandler : IWebSocketHandler
     {
         try
         {
-            // Updated to use eventType instead of Type
+            
             var baseMessage = JsonSerializer.Deserialize<BaseDto>(message);
             
             if (baseMessage == null)
@@ -98,7 +106,6 @@ public class WebSocketHandler : IWebSocketHandler
                 _logger.LogWarning("Received invalid message format from {ClientId}", clientId);
                 return;
             }
-
             // Route the message based on eventType
             switch (baseMessage.eventType)
             {
@@ -110,15 +117,16 @@ public class WebSocketHandler : IWebSocketHandler
                 case "ChatMessage":
                     await _chatEventHandler.HandleChatEvent(clientId, message);
                     break;
-                
-                case "JoinRoom":
-                    // Handle joining a room
-                    var joinRoomDto = JsonSerializer.Deserialize<JoinRoomDto>(message);
-                    if (joinRoomDto != null && !string.IsNullOrEmpty(joinRoomDto.RoomId))
-                    {
-                        await _connectionManager.AddToRoom(joinRoomDto.RoomId, clientId);
-                    }
+
+                case "RoomJoin":
+                    await _roomEventHandler.HandleJoinRoomEvent(clientId, message);
                     break;
+                
+                case "RoomLeave":
+                    await _roomEventHandler.HandleLeaveRoomEvent(clientId, message);
+                    break;
+                
+ 
                     
                 default:
                     _logger.LogWarning("Unhandled message type: {MessageType}", baseMessage.eventType);

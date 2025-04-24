@@ -3,7 +3,10 @@ export enum MessageType {
   CHAT_MESSAGE = 'ChatMessage',
   JOIN_ROOM = 'JoinRoom',
   DRAW_EVENT = 'DrawEvent',
-  CLEAR_CANVAS = 'ClearCanvas'
+  CLEAR_CANVAS = 'ClearCanvas',
+  ROOM_JOIN = 'RoomJoin',
+  ROOM_LEAVE = 'RoomLeave',
+  ROOM_UPDATE = 'RoomUpdate'
 }
 
 // Base interface for all messages
@@ -19,13 +22,6 @@ export interface ChatMessageDto extends BaseMessage {
   Username: string;
   RoomId: string;
   Timestamp: string;
-}
-
-// Join room message interface
-export interface JoinRoomDto extends BaseMessage {
-  eventType: MessageType.JOIN_ROOM;
-  RoomId: string;
-  Username: string;
 }
 
 // Drawing event interface
@@ -45,4 +41,31 @@ export interface ClearCanvasDto extends BaseMessage {
   eventType: MessageType.CLEAR_CANVAS;
   RoomId: string;
   Username: string;
+}
+
+export interface RoomJoinDto extends BaseMessage {
+  eventType: MessageType.ROOM_JOIN;
+  RoomId: string;
+  UserId: string;
+  Username: string;
+}
+
+export interface RoomLeaveDto extends BaseMessage {
+  eventType: MessageType.ROOM_LEAVE;
+  RoomId: string;
+  UserId: string;
+  Username: string;
+}
+
+export interface RoomUpdateDto extends BaseMessage {
+  eventType: MessageType.ROOM_UPDATE;
+  RoomId: string;
+  UserId: string;
+  Username: string;
+  Action: RoomAction;
+}
+
+export enum RoomAction {
+  Joined = 0,
+  Left = 1
 }

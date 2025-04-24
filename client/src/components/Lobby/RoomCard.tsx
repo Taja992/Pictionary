@@ -40,9 +40,7 @@ export default function RoomCard({
 
     // Check if user is already in the room
     const isUserInRoom = players?.some(player => player.id === user.id);
-    console.log('Attempting to join room with ID:', id);
     if (isUserInRoom) {
-      console.log('User already in room, navigating...');
       navigate(`/rooms/${id}`);
       return;
     }
@@ -59,13 +57,14 @@ export default function RoomCard({
     try {
       setIsLoading(true);
 
-      console.log('Attempting to join room with ID:', id);
       // Join the room with or without password
       const userId = user.id || '';
+      
+      // Set joinGame to false to avoid redundancy with WebSocketProvider
       await api.api.roomJoinRoom(id, { 
         userId, 
         password: passwordToUse || null,
-        joinGame: true 
+        joinGame: false  // Change to false
       });
       
       // Get room details after joining

@@ -1,10 +1,17 @@
-import { MessageType, ChatMessageDto, JoinRoomDto, DrawEventDto, ClearCanvasDto } from './websocket-types';
-import { webSocketStatusAtom } from '../atoms';
+import { 
+  MessageType, 
+  ChatMessageDto, 
+  DrawEventDto, 
+  ClearCanvasDto,
+  RoomJoinDto,
+  RoomLeaveDto
+} from './websocket-types';import { webSocketStatusAtom } from '../atoms';
 import { getDefaultStore } from 'jotai';
 
 const jotaiStore = getDefaultStore();
 
 export class WebSocketClient {
+  private isJoiningRoom: Record<string, boolean> = {};
   private socket: WebSocket | null = null;
   private isConnected = false;
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
@@ -21,7 +28,7 @@ export class WebSocketClient {
     return this.isConnected && this.socket?.readyState === WebSocket.OPEN;
   }
 
-  public connect(): Promise<void> {
+  public connect(userId?: string, username?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         // If already connected, resolve immediately
@@ -32,8 +39,13 @@ export class WebSocketClient {
 
         // Update status to connecting
         jotaiStore.set(webSocketStatusAtom, 'connecting');
+
+        let connectionUrl = this.url;
+        if (userId && username) {
+          connectionUrl += `?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}`;
+        }
         
-        this.socket = new WebSocket(this.url);
+        this.socket = new WebSocket(connectionUrl);
 
         this.socket.onopen = () => {
           console.log('WebSocket connected');
@@ -47,7 +59,6 @@ export class WebSocketClient {
         this.socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('Received message:', data);
             const eventType = data.eventType;
             
             if (eventType) {
@@ -93,21 +104,55 @@ export class WebSocketClient {
     }
   }
 
-  public joinRoom(roomId: string, username: string): void {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket not connected');
+  public roomJoin(roomId: string, userId: string, username: string): void {
+    // Add check to prevent duplicate join
+    const joinKey = `${roomId}:${userId}`;
+    if (this.isJoiningRoom[joinKey]) {
       return;
     }
     
-    const joinRoomMessage: JoinRoomDto = {
-      eventType: MessageType.JOIN_ROOM,
+    if (!this.connected) {
+      console.error('WebSocket not connected');
+      return;
+    }
+
+    // Mark as joining
+    this.isJoiningRoom[joinKey] = true;
+    
+    const joinRoomMessage: RoomJoinDto = {
+      eventType: MessageType.ROOM_JOIN,
       requestId: this.generateRequestId(),
       RoomId: roomId,
+      UserId: userId,
       Username: username
     };
+
+    this.socket!.send(JSON.stringify(joinRoomMessage));
     
-    this.socket.send(JSON.stringify(joinRoomMessage));
+    // Clear the flag after a short timeout
+    setTimeout(() => {
+      this.isJoiningRoom[joinKey] = false;
+    }, 2000);
   }
+
+  public roomLeave(roomId: string, userId: string, username: string): void {
+    if (!this.connected) {
+      console.error('WebSocket not connected');
+      return;
+    }
+
+    const leaveRoomMessage: RoomLeaveDto = {
+      eventType: MessageType.ROOM_LEAVE,
+      requestId: this.generateRequestId(),
+      RoomId: roomId,
+      UserId: userId,
+      Username: username
+    };
+
+    this.socket!.send(JSON.stringify(leaveRoomMessage));
+  }
+    
+  
 
   public sendChatMessage(message: string, username: string, roomId: string): void {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {

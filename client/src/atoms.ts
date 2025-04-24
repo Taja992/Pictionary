@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { RoomDto, UserDto, GameDto, PlayerDto } from './api/api-client';
+import { atomWithStorage } from 'jotai/utils';
 
 
 // All Rooms
@@ -21,14 +22,14 @@ export const isRoomOwnerAtom = atom((get) => {
 
 // Define a default/initial user state
 const defaultUser: UserDto = {
-  id: undefined,
-  username: undefined,
+  id: '',
+  username: '',
   totalGamesPlayed: 0,
   totalGamesWon: 0
 };
 
 // Create the user atom
-export const userAtom = atom<UserDto>(defaultUser);
+export const userAtom = atomWithStorage<UserDto>('pictionary_user', defaultUser);
 
 
 // Players List

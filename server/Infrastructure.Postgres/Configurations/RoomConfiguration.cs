@@ -23,7 +23,7 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
         builder.HasOne(r => r.Owner)
             .WithMany()
             .HasForeignKey(r => r.OwnerId)
-            .OnDelete(DeleteBehavior.Restrict); // This is restricted to prevent deletion of all rooms if owner is deleted
+            .OnDelete(DeleteBehavior.Cascade); // This is restricted to prevent deletion of all rooms if owner is deleted
 
         builder.HasMany(r => r.Players)
             .WithMany()

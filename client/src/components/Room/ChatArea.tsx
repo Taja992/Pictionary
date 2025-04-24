@@ -26,6 +26,7 @@ export default function ChatArea({
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  
   // Get the current username
   const currentUsername = username || localStorage.getItem('playerName') || 'You';
 
@@ -38,11 +39,15 @@ export default function ChatArea({
     scrollToBottom();
   }, [messages]);
 
-  // Listen for incoming chat messages from WebSocket
+  // Listen for incoming chat messages and room updates from WebSocket
   useEffect(() => {
+    // Chat message handler (updated)
     const handleChatMessage = (data: any) => {
-      // Skip messages that originated from this client to avoid duplication
-      // Don't skip any messages - we'll handle duplication differently
+
+      // Skip messages from self - they're already in state
+      if (data.Username === currentUsername) {
+        return;
+      }
       
       const newMsg = {
         id: Date.now().toString(),
@@ -51,32 +56,57 @@ export default function ChatArea({
         isSystem: false
       };
       
-      // Use functional update to avoid stale state issues
-      setMessages(prevMessages => {
-        // Check if this message already exists in our state
-        // This prevents duplicates when receiving our own messages back
-        const isDuplicate = prevMessages.some(msg => 
-          msg.sender === data.Username && 
-          msg.text === data.Message &&
-          // Check if the message was added very recently (within last 2 seconds)
-          Date.now() - parseInt(msg.id) < 2000
-        );
-        
-        if (!isDuplicate) {
-          return [...prevMessages, newMsg];
-        }
-        return prevMessages;
-      });
+      setMessages(prev => [...prev, newMsg]);
     };
     
-    // Subscribe to chat messages
-    websocketClient.on(MessageType.CHAT_MESSAGE, handleChatMessage);
+    // Room update handler with improved logging
+    const handleRoomUpdate = (data: any) => {
+
+
+      // Check if data is formatted correctly
+      if (!data || data.eventType !== 'RoomUpdate') {
+        console.warn('Invalid RoomUpdate data received:', data);
+        return;
+      }
+
+      let messageText = '';
+      
+      // Check Action value directly from the received data
+      if (data.Action === 0) { // Joined
+        messageText = `${data.Username} joined the room`;
+
+      } else if (data.Action === 1) { // Left
+        messageText = `${data.Username} left the room`;
+
+      } else {
+        console.warn('Unknown RoomAction value:', data.Action);
+      }
+
+      
+      if (messageText) {
+        // Create the new message
+        const systemMsg = {
+          id: Date.now().toString(),
+          sender: 'System',
+          text: messageText,
+          isSystem: true
+        };
+        
+        // Update the state directly rather than using a callback
+        setMessages(prev => [...prev, systemMsg]);
+      }
+    };
     
-    // Clean up on unmount
+    // Subscribe to both event types
+    websocketClient.on(MessageType.CHAT_MESSAGE, handleChatMessage);
+    websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
+    
+    // Clean up both
     return () => {
       websocketClient.off(MessageType.CHAT_MESSAGE, handleChatMessage);
+      websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
     };
-  }, [currentUsername]); // Only depend on currentUsername, not messages
+  }, [currentUsername, setMessages]);
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

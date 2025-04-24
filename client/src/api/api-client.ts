@@ -97,8 +97,10 @@ export interface JoinRoomRequest {
 }
 
 export interface UserDto {
-  id?: string;
-  username?: string;
+  /** @minLength 1 */
+  id: string;
+  /** @minLength 1 */
+  username: string;
   /** @format int32 */
   totalGamesPlayed?: number;
   /** @format int32 */

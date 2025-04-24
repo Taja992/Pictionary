@@ -43,7 +43,8 @@ public static class Extensions
     public static IServiceCollection AddWebSocketApi(this IServiceCollection services)
     {
         services.AddScoped<IDrawEventHandler, DrawEventHandler>();
-        services.AddScoped<IChatEventHandler, ChatEventHandler>(); 
+        services.AddScoped<IChatEventHandler, ChatEventHandler>();
+        services.AddScoped<IRoomEventHandler, RoomEventHandler>(); 
         // Add other event handlers
         
         return services;

@@ -8,7 +8,6 @@ interface PlayerListProps {
 
 export default function PlayerList({ players }: PlayerListProps) {
   const [currentGame] = useAtom(currentGameAtom);
-  const [currentRoom] = useAtom(currentRoomAtom);
   
   // Create a map of player scores from the current game
   const playerScores = new Map<string, number>();
