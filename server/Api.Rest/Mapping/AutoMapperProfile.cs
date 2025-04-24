@@ -15,7 +15,5 @@ public class AutoMapperProfile : Profile
         CreateMap<Score, ScoreDto>()
             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User != null ? src.User.Username : "Unknown"));
 
-        // Word mappings
-        CreateMap<Word, WordDto>();
     }
 }

@@ -19,9 +19,7 @@ public static class PostgresExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IGameRepository, GameRepository>();
-        services.AddScoped<IWordRepository, WordRepository>();
         services.AddScoped<IScoreRepository, ScoreRepository>();
-        services.AddScoped<IDrawingRepository, DrawingRepository>();
         
         return services;
     }

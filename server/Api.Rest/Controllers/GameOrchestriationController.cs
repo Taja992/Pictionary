@@ -36,33 +36,33 @@ public class GameOrchestrationController(
         }
     }
 
-    [HttpPut("{gameId}/start")]
-    public async Task<ActionResult<GameDto>> StartGame(string gameId)
-    {
-        try
-        {
-            var game = await _gameService.StartGameAsync(gameId);
-            return Ok(_mapper.Map<GameDto>(game));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+    // [HttpPut("{gameId}/start")]
+    // public async Task<ActionResult<GameDto>> StartGame(string gameId)
+    // {
+    //     try
+    //     {
+    //         var game = await _gameService.StartGameAsync(gameId);
+    //         return Ok(_mapper.Map<GameDto>(game));
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return BadRequest(ex.Message);
+    //     }
+    // }
 
-    [HttpPut("{gameId}/rounds/start")]
-    public async Task<ActionResult<GameDto>> StartRound(string gameId)
-    {
-        try
-        {
-            var game = await _gameService.StartRoundAsync(gameId);
-            return Ok(_mapper.Map<GameDto>(game));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+    // [HttpPut("{gameId}/rounds/start")]
+    // public async Task<ActionResult<GameDto>> StartRound(string gameId)
+    // {
+    //     try
+    //     {
+    //         var game = await _gameService.StartRoundAsync(gameId);
+    //         return Ok(_mapper.Map<GameDto>(game));
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return BadRequest(ex.Message);
+    //     }
+    // }
 
     [HttpPut("{gameId}/rounds/end")]
     public async Task<ActionResult<GameDto>> EndRound(string gameId)

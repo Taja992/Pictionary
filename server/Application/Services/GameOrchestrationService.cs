@@ -10,7 +10,7 @@ public class GameOrchestrationService : IGameOrchestrationService
     private readonly IGameRepository _gameRepository;
     private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IWordRepository _wordRepository;
+    private readonly IWordService _wordService;
     private readonly IScoreRepository _scoreRepository;
     private readonly ILogger<GameOrchestrationService> _logger;
 
@@ -18,14 +18,14 @@ public class GameOrchestrationService : IGameOrchestrationService
         IGameRepository gameRepository,
         IRoomRepository roomRepository,
         IUserRepository userRepository,
-        IWordRepository wordRepository,
+        IWordService wordService,
         IScoreRepository scoreRepository,
         ILogger<GameOrchestrationService> logger)
     {
         _gameRepository = gameRepository;
         _roomRepository = roomRepository;
         _userRepository = userRepository;
-        _wordRepository = wordRepository;
+        _wordService = wordService;
         _scoreRepository = scoreRepository;
         _logger = logger;
     }
@@ -151,7 +151,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         game.Status = GameStatus.RoundEnd;
         
         // Clear current word and drawer
-        game.CurrentWordId = null;
+        game.CurrentWord = null;
         game.CurrentDrawerId = null;
 
         await _gameRepository.UpdateAsync(game);
@@ -220,7 +220,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         return true;
     }
 
-    public async Task<Word> SelectWordForRoundAsync(string gameId, string? category = null)
+    public async Task<string> SelectWordForRoundAsync(string gameId, string? category = null)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
@@ -229,20 +229,15 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
 
         // Get random word
-        var word = await _wordRepository.GetRandomWordAsync(category);
-        if (word == null)
-        {
-            throw new Exception("No words available");
-        }
+        string word = category != null 
+            ? _wordService.GetRandomWordByCategory(category)
+            : _wordService.GetRandomWord();
 
         // Set the current word
-        game.CurrentWordId = word.Id;
+        game.CurrentWord = word;
         await _gameRepository.UpdateAsync(game);
-
-        // Increment word usage count
-        await _wordRepository.IncrementUsageCountAsync(word.Id);
         
-        _logger.LogInformation("Selected word {WordId} for game {GameId}", word.Id, gameId);
+        _logger.LogInformation("Selected word '{Word}' for game {GameId}", word, gameId);
 
         return word;
     }
@@ -284,29 +279,6 @@ public class GameOrchestrationService : IGameOrchestrationService
             _logger.LogWarning("Cannot add player {UserId} to game {GameId} - user not found", userId, gameId);
             return false;
         }
-    
-        // // Check if player is already in the game (has a score entry)
-        // var existingScore = await _scoreRepository.GetScoreAsync(gameId, userId);
-        // if (existingScore != null)
-        // {
-        //     _logger.LogInformation("Player {UserId} already has a score in game {GameId}", userId, gameId);
-        //     return true; // Player is already in the game
-        // }
-    
-        // // Create a new score entry for the player
-        // var score = new Score
-        // {
-        //     Id = Guid.NewGuid().ToString(),
-        //     GameId = gameId,
-        //     UserId = userId,
-        //     Points = 0,
-        //     DrawingPoints = 0,
-        //     GuessingPoints = 0,
-        //     RoundNumber = game.CurrentRound,
-        //     UpdatedAt = DateTime.UtcNow
-        // };
-    
-        // await _scoreRepository.CreateAsync(score);
         
         _logger.LogInformation("Added player {UserId} to game {GameId}", userId, gameId);
         return true;

@@ -18,7 +18,6 @@ public class GameRepository : BaseRepository<Game>, IGameRepository
             .Include(g => g.CurrentWord)
             .Include(g => g.Scores)
                 .ThenInclude(s => s.User)
-            .Include(g => g.Drawings)
             .FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
     }
 

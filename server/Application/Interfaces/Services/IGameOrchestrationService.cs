@@ -11,7 +11,7 @@ public interface IGameOrchestrationService
     Task<Game> EndRoundAsync(string gameId);
     Task<Game> EndGameAsync(string gameId);
     Task<bool> AssignDrawerAsync(string gameId, string userId);
-    Task<Word> SelectWordForRoundAsync(string gameId, string? category = null);
     Task<Game?> GetCurrentGameForRoomAsync(string roomId);
+    Task<string> SelectWordForRoundAsync(string gameId, string? category = null);
     Task<bool> AddPlayerToGameAsync(string gameId, string userId);
 }

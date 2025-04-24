@@ -17,6 +17,7 @@ public class GameConfiguration : IEntityTypeConfiguration<Game>
         builder.Property(g => g.CurrentRound).IsRequired();
         builder.Property(g => g.TotalRounds).IsRequired();
         builder.Property(g => g.RoundTimeSeconds).IsRequired();
+        builder.Property(g => g.CurrentWord).IsRequired(false); 
 
         // Configure relationships
         builder.HasOne(g => g.Room)
@@ -27,12 +28,6 @@ public class GameConfiguration : IEntityTypeConfiguration<Game>
         builder.HasOne(g => g.CurrentDrawer)
             .WithMany()
             .HasForeignKey(g => g.CurrentDrawerId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(g => g.CurrentWord)
-            .WithMany(w => w.Games)
-            .HasForeignKey(g => g.CurrentWordId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 

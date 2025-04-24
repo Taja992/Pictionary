@@ -12,9 +12,8 @@ public class PictionaryDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Room> Rooms { get; set; } = null!;
     public DbSet<Game> Games { get; set; } = null!;
-    public DbSet<Word> Words { get; set; } = null!;
     public DbSet<Score> Scores { get; set; } = null!;
-    public DbSet<Drawing> Drawings { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

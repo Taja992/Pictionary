@@ -12,9 +12,9 @@ public static class ApplicationExtensions
         services.AddScoped<IGameOrchestrationService, GameOrchestrationService>();
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IDrawingPersistenceService, DrawingPersistenceService>();
         services.AddScoped<IUserService, UserService>();
         services.AddHostedService<TempUserCleanupService>();
+        services.AddScoped<IWordService, WordService>();
 
         
         return services;
