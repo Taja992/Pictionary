@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Core.Domain.Entities;
 
-namespace Infrastructure.Postgres;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres;
 
 public class PictionaryDbContext : DbContext
 {

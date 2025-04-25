@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 
-namespace Infrastructure.Postgres.Configurations;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Configurations;
 
 public class RoomConfiguration : IEntityTypeConfiguration<Room>
 {

@@ -1,10 +1,10 @@
 using Application.Interfaces.Repositories;
-using Infrastructure.Postgres.Repositories;
+using Infrastructure.Websocket.DTOs.DTOs.Postgres.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Infrastructure.Postgres;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres;
 
 public static class PostgresExtensions
 {

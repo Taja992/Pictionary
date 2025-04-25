@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Application.Interfaces.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Application.Interfaces.WebsocketInterfaces;
+using Infrastructure.Websocket.DTOs;
 
-namespace Infrastructure.WebSocket;
+namespace Infrastructure.Websocket;
 
 public static class Extensions
 {
@@ -9,6 +11,7 @@ public static class Extensions
     {
         services.AddSingleton<IConnectionManager, ConnectionManager>();
         services.AddScoped<IWebSocketHandler, WebSocketHandler>();
+        services.AddScoped<IGameNotificationService, WebSocketGameNotificationService>();
         return services;
     }
 }

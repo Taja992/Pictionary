@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Application.Interfaces.WebsocketInterfaces;
 
-namespace Infrastructure.WebSocket;
+namespace Infrastructure.Websocket;
 
 
 public class ConnectionManager : IConnectionManager
@@ -179,6 +179,33 @@ public class ConnectionManager : IConnectionManager
 
         _logger.LogInformation("Client {ClientId} added to room {Room}", clientId, room);
         return Task.CompletedTask;
+    }
+    
+    public async Task SendToClient(string clientId, string message)
+    {
+        if (string.IsNullOrEmpty(clientId) || !_clientIdToSocket.TryGetValue(clientId, out var webSocket))
+        {
+            _logger.LogWarning("Attempted to send message to unknown client {ClientId}", clientId);
+            return;
+        }
+
+        if (webSocket.State == System.Net.WebSockets.WebSocketState.Open)
+        {
+            try
+            {
+                var buffer = System.Text.Encoding.UTF8.GetBytes(message);
+                await webSocket.SendAsync(
+                    new ArraySegment<byte>(buffer, 0, buffer.Length),
+                    System.Net.WebSockets.WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending message to client {ClientId}", clientId);
+            }
+        }
     }
 
     public Task RemoveFromRoom(string room, string clientId)

@@ -1,4 +1,4 @@
-using Infrastructure.WebSocket;
+using Infrastructure.Websocket.DTOs;
 
 namespace Api.WebSocket.DTOs;
 

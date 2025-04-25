@@ -11,6 +11,7 @@ export const currentRoomAtom = atom<RoomDto | null>(null);
 
 // Current Game
 export const currentGameAtom = atom<GameDto | null>(null);
+export const isDrawerAtom = atom<boolean>(false);
 
 
 // Check room owner
@@ -53,3 +54,5 @@ export const messagesAtom = atom<Message[]>([]);
 export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export const webSocketStatusAtom = atom<WebSocketStatus>('disconnected');
+
+

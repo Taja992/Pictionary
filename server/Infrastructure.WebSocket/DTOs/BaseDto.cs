@@ -1,4 +1,4 @@
-namespace Infrastructure.WebSocket;
+namespace Infrastructure.Websocket.DTOs;
 
 /// <summary>
 /// Base class for all Data Transfer Objects used in WebSocket communication.

@@ -12,9 +12,10 @@ public class GameOrchestrationService : IGameOrchestrationService
     private readonly IUserRepository _userRepository;
     private readonly IWordService _wordService;
     private readonly IScoreRepository _scoreRepository;
+    private readonly IGameNotificationService _gameNotificationService;
     private readonly ILogger<GameOrchestrationService> _logger;
 
-    private static readonly Dictionary<string, CancellationTokenSource> _gameTimers = new();
+    private static readonly Dictionary<string, CancellationTokenSource> GameTimers = new();
 
     public GameOrchestrationService(
         IGameRepository gameRepository,
@@ -22,12 +23,14 @@ public class GameOrchestrationService : IGameOrchestrationService
         IUserRepository userRepository,
         IWordService wordService,
         IScoreRepository scoreRepository,
+        IGameNotificationService gameNotificationService, 
         ILogger<GameOrchestrationService> logger)
     {
         _gameRepository = gameRepository;
         _roomRepository = roomRepository;
         _userRepository = userRepository;
         _wordService = wordService;
+        _gameNotificationService = gameNotificationService;
         _scoreRepository = scoreRepository;
         _logger = logger;
     }
@@ -78,6 +81,8 @@ public class GameOrchestrationService : IGameOrchestrationService
 
             await _scoreRepository.CreateAsync(score);
         }
+        
+        await _gameNotificationService.NotifyGameCreated(roomId, game);
 
         // Automatically start the game
         _ = StartGameAutomaticallyAsync(game.Id);
@@ -101,10 +106,12 @@ public class GameOrchestrationService : IGameOrchestrationService
 
             // Create a cancellation token source for this game
             var cts = new CancellationTokenSource();
-            _gameTimers[gameId] = cts;
+            GameTimers[gameId] = cts;
 
             // Start the first round
-            await StartRoundAsync(gameId);
+            var gameStart = await StartRoundAsync(gameId);
+            
+            await _gameNotificationService.NotifyGameStarted(game.RoomId, gameStart);
         }
         catch (Exception ex)
         {
@@ -131,28 +138,83 @@ public class GameOrchestrationService : IGameOrchestrationService
 
     private async Task<Game> StartRoundAsync(string gameId)
     {
+        // Get and validate game
+        var game = await GetAndIncrementRoundCounter(gameId);
+    
+        try
+        {
+            // Prepare the round (select drawer and word)
+            await PrepareRoundAsync(game);
+        
+            // Start the round timer
+            await StartRoundTimerAsync(gameId);
+        
+            // Get the final updated game state
+            var updatedGame = await RefreshGameStateAsync(gameId) ?? game;
+        
+            // Send Notification
+            await _gameNotificationService.NotifyRoundStarted(updatedGame.RoomId, updatedGame);
+        
+            // Send the word to the drawer only
+            if (updatedGame.CurrentDrawerId != null && updatedGame.CurrentWord != null)
+            {
+                await _gameNotificationService.SendWordToDrawer(updatedGame.CurrentDrawerId, updatedGame.CurrentWord);
+            }
+        
+            return updatedGame;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in round setup for game {GameId}", gameId);
+            return game;
+        }
+    }
+    
+    private async Task<Game> GetAndIncrementRoundCounter(string gameId)
+    {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
         {
             throw new Exception($"Game with ID {gameId} not found");
         }
-
+    
         // Increment round number
         game.CurrentRound++;
         
-        // Set game state to drawing
-        game.Status = GameStatus.Drawing;
-        
-        // Set round start time
+        // Set round start time but keep status as "Starting" until word and drawer are set
         game.RoundStartTime = DateTime.UtcNow;
-
+    
         await _gameRepository.UpdateAsync(game);
         
-        _logger.LogInformation("Started round {Round} in game {GameId}", game.CurrentRound, gameId);
-
-        // Start the round timer
-        await StartRoundTimerAsync(gameId);
-
+        _logger.LogInformation("Starting round {Round} in game {GameId}", game.CurrentRound, gameId);
+        
+        return game;
+    }
+    
+    private async Task PrepareRoundAsync(Game game)
+    {
+        // Select drawer
+        string drawerId = await SelectNextDrawerAsync(game.Id);
+        
+        // Select word
+        string word = await SelectWordForRoundAsync(game.Id);
+        
+        // Now that we have both drawer and word, set game to Drawing state
+        var updatedGame = await _gameRepository.GetByIdAsync(game.Id);
+        if (updatedGame != null)
+        {
+            updatedGame.Status = GameStatus.Drawing;
+            await _gameRepository.UpdateAsync(updatedGame);
+        }
+    }
+    
+    private async Task<Game?> RefreshGameStateAsync(string gameId)
+    {
+        var game = await _gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            _logger.LogWarning("Game {GameId} was not found after starting round", gameId);
+        }
         return game;
     }
 
@@ -160,10 +222,10 @@ public class GameOrchestrationService : IGameOrchestrationService
     {
         try
         {
-            if (!_gameTimers.TryGetValue(gameId, out var cts))
+            if (!GameTimers.TryGetValue(gameId, out var cts))
             {
                 cts = new CancellationTokenSource();
-                _gameTimers[gameId] = cts;
+                GameTimers[gameId] = cts;
             }
 
             var game = await _gameRepository.GetByIdAsync(gameId);
@@ -220,6 +282,8 @@ public class GameOrchestrationService : IGameOrchestrationService
         game.CurrentDrawerId = null;
 
         await _gameRepository.UpdateAsync(game);
+        // send notification
+        await _gameNotificationService.NotifyRoundEnded(game.RoomId, game);
         
         _logger.LogInformation("Ended round {Round} in game {GameId}", game.CurrentRound, gameId);
 
@@ -269,10 +333,10 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
 
         // Cancel any active timers for this game
-        if (_gameTimers.TryGetValue(gameId, out var cts))
+        if (GameTimers.TryGetValue(gameId, out var cts))
         {
-            cts.Cancel();
-            _gameTimers.Remove(gameId);
+            await cts.CancelAsync();
+            GameTimers.Remove(gameId);
         }
 
         // Set game state to finished
@@ -288,6 +352,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
 
         await _gameRepository.UpdateAsync(game);
+        await _gameNotificationService.NotifyGameEnded(game.RoomId, game);
         
         _logger.LogInformation("Ended game {GameId}", gameId);
 
@@ -320,7 +385,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         return true;
     }
 
-    public async Task<string> SelectWordForRoundAsync(string gameId, string? category = null)
+    private async Task<string> SelectWordForRoundAsync(string gameId, string? category = null)
     {
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null)
@@ -383,6 +448,52 @@ public class GameOrchestrationService : IGameOrchestrationService
         
         _logger.LogInformation("Added player {UserId} to game {GameId}", userId, gameId);
         return true;
+    }
+
+    private async Task<string> SelectNextDrawerAsync(string gameId)
+    {
+        try
+        {
+            var game = await _gameRepository.GetByIdAsync(gameId);
+            if (game == null)
+            {
+                _logger.LogWarning("Cannot select drawer for game {GameId} - game not found", gameId);
+                return string.Empty;
+            }
+        
+            var room = await _roomRepository.GetByIdAsync(game.RoomId);
+            if (room == null || room.Players.Count == 0)
+            {
+                _logger.LogWarning("Cannot select drawer for game {GameId} - room {RoomId} not found or has no players", 
+                    gameId, game.RoomId);
+                return string.Empty;
+            }
+
+            // Find current drawer index
+            var currentDrawerIndex = -1;
+            if (game.CurrentDrawerId != null)
+            {
+                currentDrawerIndex = room.Players.FindIndex(p => p.Id == game.CurrentDrawerId);
+            }
+
+            // Select next drawer (circular)
+            var nextDrawerIndex = (currentDrawerIndex + 1) % room.Players.Count;
+            var nextDrawer = room.Players[nextDrawerIndex];
+
+            // Assign the drawer
+            await AssignDrawerAsync(gameId, nextDrawer.Id);
+        
+            // Notify
+            await _gameNotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
+
+            _logger.LogInformation("Selected {Username} as drawer for game {GameId}", nextDrawer.Username, gameId);
+            return nextDrawer.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error selecting drawer for game {GameId}", gameId);
+            return string.Empty;
+        }
     }
 
     // private async Task<bool> ForceStopGameAsync(string gameId)

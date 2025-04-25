@@ -62,19 +62,19 @@ public class GameOrchestrationController(
         }
     }
 
-    [HttpGet("{gameId}/word")]
-    public async Task<ActionResult<WordDto>> SelectWord(string gameId, [FromQuery] string? category = null)
-    {
-        try
-        {
-            var word = await _gameService.SelectWordForRoundAsync(gameId, category);
-            return Ok(_mapper.Map<WordDto>(word));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+    // [HttpGet("{gameId}/word")]
+    // public async Task<ActionResult<WordDto>> SelectWord(string gameId, [FromQuery] string? category = null)
+    // {
+    //     try
+    //     {
+    //         var word = await _gameService.SelectWordForRoundAsync(gameId, category);
+    //         return Ok(_mapper.Map<WordDto>(word));
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return BadRequest(ex.Message);
+    //     }
+    // }
 
     [HttpGet("room/{roomId}")]
     public async Task<ActionResult<GameDto>> GetCurrentGameForRoom(string roomId)

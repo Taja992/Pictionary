@@ -6,8 +6,21 @@ export enum MessageType {
   CLEAR_CANVAS = 'ClearCanvas',
   ROOM_JOIN = 'RoomJoin',
   ROOM_LEAVE = 'RoomLeave',
-  ROOM_UPDATE = 'RoomUpdate'
+  ROOM_UPDATE = 'RoomUpdate',
+  GAME_CREATED = 'game:created',
+  GAME_STARTED = 'game:started',
+  ROUND_STARTED = 'round:started',
+  ROUND_ENDED = 'round:ended',
+  GAME_ENDED = 'game:ended',
+  DRAWER_SELECTED = 'drawer:selected',
+  DRAWER_WORD = 'drawer:word'
 }
+
+export interface BaseGameEvent {
+  type: string;
+  gameId: string;
+}
+
 
 // Base interface for all messages
 export interface BaseMessage {
@@ -68,4 +81,44 @@ export interface RoomUpdateDto extends BaseMessage {
 export enum RoomAction {
   Joined = 0,
   Left = 1
+}
+
+//////////////// base game ///////////////////
+export interface GameCreatedEvent extends BaseGameEvent {
+  status: string;
+  totalRounds: number;
+  timePerRound: number;
+}
+
+export interface GameStartedEvent extends BaseGameEvent {
+  currentRound: number;
+}
+
+export interface RoundStartedEvent extends BaseGameEvent {
+  roundNumber: number;
+  totalRounds: number;
+  drawerId: string;
+  startTime: string;
+  durationSeconds: number;
+}
+
+export interface DrawerSelectedEvent {
+  type: string;
+  drawerId: string;
+  drawerName: string;
+}
+
+export interface DrawerWordEvent {
+  type: string;
+  word: string;
+}
+
+export interface RoundEndedEvent extends BaseGameEvent {
+  roundNumber: number;
+  totalRounds: number;
+  isLastRound: boolean;
+}
+
+export interface GameEndedEvent extends BaseGameEvent {
+  status: string;
 }

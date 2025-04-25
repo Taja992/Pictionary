@@ -4,13 +4,13 @@ using Microsoft.Extensions.Options;
 using Application.Models;
 using Application;
 using Api.Rest;
-using Infrastructure.Postgres;
+using Infrastructure.Websocket.DTOs.DTOs.Postgres;
 using NSwag.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Api.WebSocket;
-using Infrastructure.WebSocket;
+using Infrastructure.Websocket;
 
 
 var builder = WebApplication.CreateBuilder(args);

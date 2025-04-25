@@ -16,6 +16,7 @@ public static class ApplicationExtensions
         services.AddHostedService<TempUserCleanupService>();
         services.AddScoped<IWordService, WordService>();
 
+
         
         return services;
     }

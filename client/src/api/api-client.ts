@@ -27,7 +27,7 @@ export interface GameDto {
   /** @format date-time */
   endTime?: string | null;
   currentDrawerId?: string | null;
-  currentWordId?: string | null;
+  currentWord?: string | null;
   scores?: ScoreDto[];
 }
 
@@ -52,12 +52,6 @@ export interface CreateGameRequest {
 
 export interface AssignDrawerRequest {
   userId?: string;
-}
-
-export interface WordDto {
-  id?: string;
-  text?: string;
-  category?: string | null;
 }
 
 export interface RoomDto {
@@ -355,28 +349,6 @@ export class Api<
      * No description
      *
      * @tags GameOrchestration
-     * @name GameOrchestrationSelectWord
-     * @request GET:/api/games/{gameId}/word
-     */
-    gameOrchestrationSelectWord: (
-      gameId: string,
-      query?: {
-        category?: string | null;
-      },
-      params: RequestParams = {},
-    ) =>
-      this.request<WordDto, any>({
-        path: `/api/games/${gameId}/word`,
-        method: "GET",
-        query: query,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
      * @name GameOrchestrationGetCurrentGameForRoom
      * @request GET:/api/games/room/{roomId}
      */
@@ -476,21 +448,6 @@ export class Api<
         path: `/api/Room/${id}/leave`,
         method: "POST",
         query: query,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Test
-     * @name TestGet
-     * @request GET:/api/Test
-     */
-    testGet: (params: RequestParams = {}) =>
-      this.request<string, any>({
-        path: `/api/Test`,
-        method: "GET",
-        format: "json",
         ...params,
       }),
 

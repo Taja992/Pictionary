@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Application.Interfaces.WebsocketInterfaces;
 
-namespace Infrastructure.WebSocket;
+namespace Infrastructure.Websocket;
 
 public class WebSocketHandler : IWebSocketHandler
 {

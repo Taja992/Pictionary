@@ -14,7 +14,7 @@ namespace Api.Rest.DTOs.Game;
         public DateTime? RoundStartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public string? CurrentDrawerId { get; set; }
-        public string? CurrentWordId { get; set; }
+        public string? CurrentWord { get; set; } 
         public List<ScoreDto> Scores { get; set; } = new();
     }
 

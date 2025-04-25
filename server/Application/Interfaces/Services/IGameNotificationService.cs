@@ -1,0 +1,14 @@
+﻿using Core.Domain.Entities;
+
+namespace Application.Interfaces.Services;
+
+public interface IGameNotificationService
+{
+    Task NotifyGameCreated(string roomId, Game game);
+    Task NotifyGameStarted(string roomId, Game game);
+    Task NotifyRoundStarted(string roomId, Game game);
+    Task NotifyRoundEnded(string roomId, Game game);
+    Task NotifyGameEnded(string roomId, Game game);
+    Task NotifyDrawerSelected(string roomId, string drawerId, string drawerName);
+    Task SendWordToDrawer(string drawerId, string word);
+}

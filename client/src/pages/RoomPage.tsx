@@ -95,7 +95,7 @@ export default function RoomPage() {
           roomName={currentRoom?.name || 'Game Room'}
           round={currentGame?.currentRound || 0}
           maxRounds={currentGame?.totalRounds || 0}
-          word={currentGame?.currentWordId || ''}
+          word={currentGame?.currentWord || ''}
           timeLeft={currentGame?.roundTimeSeconds || 0}
           gameStatus={currentGame?.status || 'waiting'}
         />

@@ -2,7 +2,7 @@ using Application.Interfaces.Repositories;
 using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Postgres.Repositories;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Repositories;
 
 public class ScoreRepository : BaseRepository<Score>, IScoreRepository
 {

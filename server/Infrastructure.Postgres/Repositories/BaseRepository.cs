@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Postgres.Repositories;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Repositories;
 
 // Create a base repository class that implements common CRUD operations
 // This is just to prevent duplication of code across repositories

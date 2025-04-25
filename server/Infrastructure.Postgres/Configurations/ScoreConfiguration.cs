@@ -2,7 +2,7 @@ using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Infrastructure.Postgres.Configurations;
+namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Configurations;
 
 public class ScoreConfiguration : IEntityTypeConfiguration<Score>
 {
