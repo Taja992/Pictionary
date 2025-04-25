@@ -59,12 +59,12 @@ export class WebSocketClient {
         this.socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            // Handle messages with eventType (from your existing handlers)
+            // Handle messages with eventType (BaseDTO)
             if (data.eventType) {
               const handlers = this.messageHandlers.get(data.eventType) || [];
               handlers.forEach(handler => handler(data));
             }
-            // Handle game messages that use 'type' instead of 'eventType'
+            // Handle game messages that use 'type' (GameNotificationsDTO)
             else if (data.type) {
               const handlers = this.messageHandlers.get(data.type) || [];
               handlers.forEach(handler => handler(data));

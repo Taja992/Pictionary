@@ -1,6 +1,7 @@
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Core.Domain.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
@@ -12,6 +13,7 @@ public class GameOrchestrationService : IGameOrchestrationService
     private readonly IUserRepository _userRepository;
     private readonly IWordService _wordService;
     private readonly IScoreRepository _scoreRepository;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IGameNotificationService _gameNotificationService;
     private readonly ILogger<GameOrchestrationService> _logger;
 
@@ -23,6 +25,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         IUserRepository userRepository,
         IWordService wordService,
         IScoreRepository scoreRepository,
+        IServiceScopeFactory serviceScopeFactory,
         IGameNotificationService gameNotificationService, 
         ILogger<GameOrchestrationService> logger)
     {
@@ -30,6 +33,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         _roomRepository = roomRepository;
         _userRepository = userRepository;
         _wordService = wordService;
+        _serviceScopeFactory = serviceScopeFactory;
         _gameNotificationService = gameNotificationService;
         _scoreRepository = scoreRepository;
         _logger = logger;
@@ -57,7 +61,7 @@ public class GameOrchestrationService : IGameOrchestrationService
 
         // Save the game
         await _gameRepository.CreateAsync(game);
-        
+
         // Update room status
         room.Status = RoomStatus.Playing;
         await _roomRepository.UpdateAsync(room);
@@ -81,42 +85,46 @@ public class GameOrchestrationService : IGameOrchestrationService
 
             await _scoreRepository.CreateAsync(score);
         }
-        
+
         await _gameNotificationService.NotifyGameCreated(roomId, game);
 
-        // Automatically start the game
-        _ = StartGameAutomaticallyAsync(game.Id);
+        // Store the game ID for delayed processing
+        _ = Task.Run(async () => 
+        {
+            try 
+            {
+                // Wait 2 seconds before starting the game to allow clients to initialize
+                await Task.Delay(2000);
+
+                // Use a scoped service provider to get fresh DbContext instances
+                using var scope = _serviceScopeFactory.CreateScope();
+                var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+                var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+
+                // Get a fresh game instance with a new DbContext
+                var freshGameInstance = await gameRepository.GetByIdAsync(game.Id);
+                if (freshGameInstance == null || freshGameInstance.Status == GameStatus.GameEnd)
+                {
+                    _logger.LogWarning("Cannot start game {GameId} - game not found or already ended", game.Id);
+                    return;
+                }
+
+                // Create a cancellation token source for this game
+                var cts = new CancellationTokenSource();
+                GameTimers[game.Id] = cts;
+
+                // Start the first round (using the StartRound method that takes a service scope)
+                var gameStart = await StartRoundWithScopeAsync(game.Id, scope);
+
+                await gameNotificationService.NotifyGameStarted(freshGameInstance.RoomId, gameStart);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error starting game {GameId} automatically", game.Id);
+            }
+        });
 
         return game;
-    }
-
-    private async Task StartGameAutomaticallyAsync(string gameId)
-    {
-        try
-        {
-            // Wait 2 seconds before starting the game to allow clients to initialize
-            await Task.Delay(2000);
-            
-            var game = await _gameRepository.GetByIdAsync(gameId);
-            if (game == null || game.Status == GameStatus.GameEnd)
-            {
-                _logger.LogWarning("Cannot start game {GameId} - game not found or already ended", gameId);
-                return;
-            }
-
-            // Create a cancellation token source for this game
-            var cts = new CancellationTokenSource();
-            GameTimers[gameId] = cts;
-
-            // Start the first round
-            var gameStart = await StartRoundAsync(gameId);
-            
-            await _gameNotificationService.NotifyGameStarted(game.RoomId, gameStart);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error starting game {GameId} automatically", gameId);
-        }
     }
 
     public async Task<Game?> GetCurrentGameForRoomAsync(string roomId)
@@ -134,277 +142,6 @@ public class GameOrchestrationService : IGameOrchestrationService
             roomId, currentGame?.Id ?? "No active game");
         
         return currentGame;
-    }
-
-    private async Task<Game> StartRoundAsync(string gameId)
-    {
-        // Get and validate game
-        var game = await GetAndIncrementRoundCounter(gameId);
-    
-        try
-        {
-            // Prepare the round (select drawer and word)
-            await PrepareRoundAsync(game);
-        
-            // Start the round timer
-            await StartRoundTimerAsync(gameId);
-        
-            // Get the final updated game state
-            var updatedGame = await RefreshGameStateAsync(gameId) ?? game;
-        
-            // Send Notification
-            await _gameNotificationService.NotifyRoundStarted(updatedGame.RoomId, updatedGame);
-        
-            // Send the word to the drawer only
-            if (updatedGame.CurrentDrawerId != null && updatedGame.CurrentWord != null)
-            {
-                await _gameNotificationService.SendWordToDrawer(updatedGame.CurrentDrawerId, updatedGame.CurrentWord);
-            }
-        
-            return updatedGame;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in round setup for game {GameId}", gameId);
-            return game;
-        }
-    }
-    
-    private async Task<Game> GetAndIncrementRoundCounter(string gameId)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            throw new Exception($"Game with ID {gameId} not found");
-        }
-    
-        // Increment round number
-        game.CurrentRound++;
-        
-        // Set round start time but keep status as "Starting" until word and drawer are set
-        game.RoundStartTime = DateTime.UtcNow;
-    
-        await _gameRepository.UpdateAsync(game);
-        
-        _logger.LogInformation("Starting round {Round} in game {GameId}", game.CurrentRound, gameId);
-        
-        return game;
-    }
-    
-    private async Task PrepareRoundAsync(Game game)
-    {
-        // Select drawer
-        string drawerId = await SelectNextDrawerAsync(game.Id);
-        
-        // Select word
-        string word = await SelectWordForRoundAsync(game.Id);
-        
-        // Now that we have both drawer and word, set game to Drawing state
-        var updatedGame = await _gameRepository.GetByIdAsync(game.Id);
-        if (updatedGame != null)
-        {
-            updatedGame.Status = GameStatus.Drawing;
-            await _gameRepository.UpdateAsync(updatedGame);
-        }
-    }
-    
-    private async Task<Game?> RefreshGameStateAsync(string gameId)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            _logger.LogWarning("Game {GameId} was not found after starting round", gameId);
-        }
-        return game;
-    }
-
-    private async Task StartRoundTimerAsync(string gameId)
-    {
-        try
-        {
-            if (!GameTimers.TryGetValue(gameId, out var cts))
-            {
-                cts = new CancellationTokenSource();
-                GameTimers[gameId] = cts;
-            }
-
-            var game = await _gameRepository.GetByIdAsync(gameId);
-            if (game == null)
-            {
-                _logger.LogWarning("Cannot start round timer - game {GameId} not found", gameId);
-                return;
-            }
-
-            // Start a timer for the round duration
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    // Wait for the round to complete
-                    await Task.Delay(game.RoundTimeSeconds * 1000, cts.Token);
-                    
-                    // End the round if it hasn't been ended already
-                    var currentGame = await _gameRepository.GetByIdAsync(gameId);
-                    if (currentGame != null && currentGame.Status == GameStatus.Drawing)
-                    {
-                        await EndRoundAsync(gameId);
-                    }
-                }
-                catch (TaskCanceledException)
-                {
-                    // Timer was cancelled, nothing to do
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in round timer for game {GameId}", gameId);
-                }
-            }, cts.Token);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error starting round timer for game {GameId}", gameId);
-        }
-    }
-
-    public async Task<Game> EndRoundAsync(string gameId)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            throw new Exception($"Game with ID {gameId} not found");
-        }
-
-        // Set game state to round end
-        game.Status = GameStatus.RoundEnd;
-        
-        // Clear current word and drawer
-        game.CurrentWord = null;
-        game.CurrentDrawerId = null;
-
-        await _gameRepository.UpdateAsync(game);
-        // send notification
-        await _gameNotificationService.NotifyRoundEnded(game.RoomId, game);
-        
-        _logger.LogInformation("Ended round {Round} in game {GameId}", game.CurrentRound, gameId);
-
-        // If this was the last round, end the game
-        if (game.CurrentRound >= game.TotalRounds)
-        {
-            return await EndGameAsync(gameId);
-        }
-        else
-        {
-            // Start next round after delay
-            _ = StartNextRoundAfterDelayAsync(gameId);
-        }
-
-        return game;
-    }
-
-    private async Task StartNextRoundAfterDelayAsync(string gameId)
-    {
-        try
-        {
-            // Wait 8 seconds before starting the next round
-            await Task.Delay(8000);
-            
-            var game = await _gameRepository.GetByIdAsync(gameId);
-            if (game == null || game.Status == GameStatus.GameEnd)
-            {
-                _logger.LogWarning("Cannot start next round - game {GameId} not found or already ended", gameId);
-                return;
-            }
-
-            // Start the next round
-            await StartRoundAsync(gameId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error starting next round for game {GameId}", gameId);
-        }
-    }
-
-    private async Task<Game> EndGameAsync(string gameId)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            throw new Exception($"Game with ID {gameId} not found");
-        }
-
-        // Cancel any active timers for this game
-        if (GameTimers.TryGetValue(gameId, out var cts))
-        {
-            await cts.CancelAsync();
-            GameTimers.Remove(gameId);
-        }
-
-        // Set game state to finished
-        game.Status = GameStatus.GameEnd;
-        game.EndTime = DateTime.UtcNow;
-
-        // Update room status
-        var room = await _roomRepository.GetByIdAsync(game.RoomId);
-        if (room != null)
-        {
-            room.Status = RoomStatus.Waiting;
-            await _roomRepository.UpdateAsync(room);
-        }
-
-        await _gameRepository.UpdateAsync(game);
-        await _gameNotificationService.NotifyGameEnded(game.RoomId, game);
-        
-        _logger.LogInformation("Ended game {GameId}", gameId);
-
-        // Update player statistics
-        await UpdatePlayerStatsAsync(gameId);
-
-        return game;
-    }
-
-    public async Task<bool> AssignDrawerAsync(string gameId, string userId)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            throw new Exception($"Game with ID {gameId} not found");
-        }
-
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-        {
-            throw new Exception($"User with ID {userId} not found");
-        }
-
-        // Set the user as the current drawer
-        game.CurrentDrawerId = userId;
-        await _gameRepository.UpdateAsync(game);
-        
-        _logger.LogInformation("Assigned user {UserId} as drawer for game {GameId}", userId, gameId);
-
-        return true;
-    }
-
-    private async Task<string> SelectWordForRoundAsync(string gameId, string? category = null)
-    {
-        var game = await _gameRepository.GetByIdAsync(gameId);
-        if (game == null)
-        {
-            throw new Exception($"Game with ID {gameId} not found");
-        }
-
-        // Get random word
-        string word = category != null 
-            ? _wordService.GetRandomWordByCategory(category)
-            : _wordService.GetRandomWord();
-
-        // Set the current word
-        game.CurrentWord = word;
-        await _gameRepository.UpdateAsync(game);
-        
-        _logger.LogInformation("Selected word '{Word}' for game {GameId}", word, gameId);
-
-        return word;
     }
 
     private async Task UpdatePlayerStatsAsync(string gameId)
@@ -450,42 +187,140 @@ public class GameOrchestrationService : IGameOrchestrationService
         return true;
     }
 
-    private async Task<string> SelectNextDrawerAsync(string gameId)
+    private async Task<Game> StartRoundWithScopeAsync(string gameId, IServiceScope scope)
+    {
+        // Get fresh repositories from the scope
+        var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+        var roomRepository = scope.ServiceProvider.GetRequiredService<IRoomRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var wordService = scope.ServiceProvider.GetRequiredService<IWordService>();
+        var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        
+        // Get and validate game
+        var game = await GetAndIncrementRoundCounterWithScopeAsync(gameId, gameRepository);
+        
+        try
+        {
+            // Prepare the round (select drawer and word)
+            await PrepareRoundWithScopeAsync(game, scope);
+            
+            // Start the round timer
+            await StartRoundTimerWithScopeAsync(gameId, scope);
+            
+            // Get the final updated game state
+            var updatedGame = await gameRepository.GetByIdAsync(gameId) ?? game;
+            
+            // Send Notification
+            await gameNotificationService.NotifyRoundStarted(updatedGame.RoomId, updatedGame);
+            
+            // Send the word to the drawer only
+            if (updatedGame.CurrentDrawerId != null && updatedGame.CurrentWord != null)
+            {
+                await gameNotificationService.SendWordToDrawer(updatedGame.CurrentDrawerId, updatedGame.CurrentWord);
+            }
+            
+            return updatedGame;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in round setup for game {GameId}", gameId);
+            return game;
+        }
+    }
+
+    private async Task<Game> GetAndIncrementRoundCounterWithScopeAsync(string gameId, IGameRepository gameRepository)
+    {
+        var game = await gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            throw new Exception($"Game with ID {gameId} not found");
+        }
+
+        // Increment round number
+        game.CurrentRound++;
+        
+        // Set round start time but keep status as "Starting" until word and drawer are set
+        game.RoundStartTime = DateTime.UtcNow;
+
+        await gameRepository.UpdateAsync(game);
+        
+        _logger.LogInformation("Starting round {Round} in game {GameId}", game.CurrentRound, gameId);
+        
+        return game;
+    }
+
+    private async Task PrepareRoundWithScopeAsync(Game game, IServiceScope scope)
+    {
+        var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+        var roomRepository = scope.ServiceProvider.GetRequiredService<IRoomRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var wordService = scope.ServiceProvider.GetRequiredService<IWordService>();
+        var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        
+        // Select drawer
+        string drawerId = await SelectNextDrawerWithScopeAsync(game.Id, scope);
+        
+        // Select word
+        string word = await SelectWordForRoundWithScopeAsync(game.Id, null, gameRepository, wordService);
+        
+        // Now that we have both drawer and word, set game to Drawing state
+        var updatedGame = await gameRepository.GetByIdAsync(game.Id);
+        if (updatedGame != null)
+        {
+            updatedGame.Status = GameStatus.Drawing;
+            await gameRepository.UpdateAsync(updatedGame);
+        }
+    }
+
+    private async Task<string> SelectNextDrawerWithScopeAsync(string gameId, IServiceScope scope)
     {
         try
         {
-            var game = await _gameRepository.GetByIdAsync(gameId);
+            var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+            var roomRepository = scope.ServiceProvider.GetRequiredService<IRoomRepository>();
+            var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+            
+            var game = await gameRepository.GetByIdAsync(gameId);
             if (game == null)
             {
                 _logger.LogWarning("Cannot select drawer for game {GameId} - game not found", gameId);
                 return string.Empty;
             }
         
-            var room = await _roomRepository.GetByIdAsync(game.RoomId);
+            var room = await roomRepository.GetByIdAsync(game.RoomId);
             if (room == null || room.Players.Count == 0)
             {
                 _logger.LogWarning("Cannot select drawer for game {GameId} - room {RoomId} not found or has no players", 
                     gameId, game.RoomId);
                 return string.Empty;
             }
-
+    
             // Find current drawer index
             var currentDrawerIndex = -1;
             if (game.CurrentDrawerId != null)
             {
+                // Find the current drawer in the room players list (not game players)
                 currentDrawerIndex = room.Players.FindIndex(p => p.Id == game.CurrentDrawerId);
+                
+                // If current drawer is not found in the room players list, start from beginning
+                if (currentDrawerIndex == -1)
+                {
+                    _logger.LogInformation("Current drawer {DrawerId} not found in room {RoomId}, selecting from beginning", 
+                        game.CurrentDrawerId, game.RoomId);
+                }
             }
-
+    
             // Select next drawer (circular)
             var nextDrawerIndex = (currentDrawerIndex + 1) % room.Players.Count;
             var nextDrawer = room.Players[nextDrawerIndex];
-
+    
             // Assign the drawer
-            await AssignDrawerAsync(gameId, nextDrawer.Id);
+            game.CurrentDrawerId = nextDrawer.Id;
+            await gameRepository.UpdateAsync(game);
         
             // Notify
-            await _gameNotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
-
+            await gameNotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
+    
             _logger.LogInformation("Selected {Username} as drawer for game {GameId}", nextDrawer.Username, gameId);
             return nextDrawer.Id;
         }
@@ -496,25 +331,224 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
     }
 
-    // private async Task<bool> ForceStopGameAsync(string gameId)
-    // {
-    //     try
-    //     {
-    //         // Cancel any active timers
-    //         if (_gameTimers.TryGetValue(gameId, out var cts))
-    //         {
-    //             cts.Cancel();
-    //             _gameTimers.Remove(gameId);
-    //         }
+    private async Task<string> SelectWordForRoundWithScopeAsync(string gameId, string? category, IGameRepository gameRepository, IWordService wordService)
+    {
+        var game = await gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            throw new Exception($"Game with ID {gameId} not found");
+        }
+
+        // Get random word
+        string word = category != null 
+            ? wordService.GetRandomWordByCategory(category)
+            : wordService.GetRandomWord();
+
+        // Set the current word
+        game.CurrentWord = word;
+        await gameRepository.UpdateAsync(game);
+        
+        _logger.LogInformation("Selected word '{Word}' for game {GameId}", word, gameId);
+
+        return word;
+    }
+
+    private async Task StartRoundTimerWithScopeAsync(string gameId, IServiceScope scope)
+    {
+        try
+        {
+            var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+            var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        
+            if (!GameTimers.TryGetValue(gameId, out var cts))
+            {
+                cts = new CancellationTokenSource();
+                GameTimers[gameId] = cts;
+            }
+
+            var game = await gameRepository.GetByIdAsync(gameId);
+            if (game == null)
+            {
+                _logger.LogWarning("Cannot start round timer - game {GameId} not found", gameId);
+                return;
+            }
+
+            // Start a timer for the round duration
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Wait for the round to complete
+                    await Task.Delay(game.RoundTimeSeconds * 1000, cts.Token);
+                    
+                    // End the round if it hasn't been ended already
+                    // Importantly, create a NEW scope since this is a separate Task
+                    using var roundEndScope = _serviceScopeFactory.CreateScope();
+                    var scopedGameRepository = roundEndScope.ServiceProvider.GetRequiredService<IGameRepository>();
+                    
+                    var currentGame = await scopedGameRepository.GetByIdAsync(gameId);
+                    if (currentGame != null && currentGame.Status == GameStatus.Drawing)
+                    {
+                        await EndRoundWithScopeAsync(gameId, roundEndScope);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // Timer was cancelled, nothing to do
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in round timer for game {GameId}", gameId);
+                }
+            }, cts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting round timer for game {GameId}", gameId);
+        }
+    }
+
+    private async Task<Game> EndRoundWithScopeAsync(string gameId, IServiceScope scope)
+    {
+        var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+        var roomRepository = scope.ServiceProvider.GetRequiredService<IRoomRepository>();
+        var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        
+        var game = await gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            throw new Exception($"Game with ID {gameId} not found");
+        }
+
+        // Set game state to round end
+        game.Status = GameStatus.RoundEnd;
+        
+        // Clear current word and drawer
+        game.CurrentWord = null;
+        game.CurrentDrawerId = null;
+
+        await gameRepository.UpdateAsync(game);
+        
+        // Send notification
+        await gameNotificationService.NotifyRoundEnded(game.RoomId, game);
+        
+        _logger.LogInformation("Ended round {Round} in game {GameId}", game.CurrentRound, gameId);
+
+        // If this was the last round, end the game
+        if (game.CurrentRound >= game.TotalRounds)
+        {
+            return await EndGameWithScopeAsync(gameId, scope);
+        }
+        else
+        {
+            // Start next round after delay
+            _ = StartNextRoundAfterDelayWithScopeAsync(gameId);
+        }
+
+        return game;
+    }
+
+    private async Task StartNextRoundAfterDelayWithScopeAsync(string gameId)
+    {
+        try
+        {
+            // Wait 8 seconds before starting the next round
+            await Task.Delay(8000);
             
-    //         // End the game
-    //         await EndGameAsync(gameId);
-    //         return true;
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error force stopping game {GameId}", gameId);
-    //         return false;
-    //     }
-    // }
+            // Create a new scope for the delayed operation
+            using var scope = _serviceScopeFactory.CreateScope();
+            var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+            
+            var game = await gameRepository.GetByIdAsync(gameId);
+            if (game == null || game.Status == GameStatus.GameEnd)
+            {
+                _logger.LogWarning("Cannot start next round - game {GameId} not found or already ended", gameId);
+                return;
+            }
+
+            // Start the next round
+            await StartRoundWithScopeAsync(gameId, scope);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting next round for game {GameId}", gameId);
+        }
+    }
+
+    private async Task<Game> EndGameWithScopeAsync(string gameId, IServiceScope scope)
+    {
+        var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+        var roomRepository = scope.ServiceProvider.GetRequiredService<IRoomRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var scoreRepository = scope.ServiceProvider.GetRequiredService<IScoreRepository>();
+        var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        
+        var game = await gameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            throw new Exception($"Game with ID {gameId} not found");
+        }
+
+        // Cancel any active timers for this game
+        if (GameTimers.TryGetValue(gameId, out var cts))
+        {
+            await cts.CancelAsync();
+            GameTimers.Remove(gameId);
+        }
+
+        // Set game state to finished
+        game.Status = GameStatus.GameEnd;
+        game.EndTime = DateTime.UtcNow;
+
+        // Update room status
+        var room = await roomRepository.GetByIdAsync(game.RoomId);
+        if (room != null)
+        {
+            room.Status = RoomStatus.Waiting;
+            await roomRepository.UpdateAsync(room);
+        }
+
+        await gameRepository.UpdateAsync(game);
+        await gameNotificationService.NotifyGameEnded(game.RoomId, game);
+        
+        _logger.LogInformation("Ended game {GameId}", gameId);
+
+        // Update player statistics in a new task (to avoid blocking)
+        _ = Task.Run(async () =>
+        {
+            try 
+            {
+                // Create a new scope for this background task
+                using var statsScope = _serviceScopeFactory.CreateScope();
+                var statsUserRepo = statsScope.ServiceProvider.GetRequiredService<IUserRepository>();
+                var statsScoreRepo = statsScope.ServiceProvider.GetRequiredService<IScoreRepository>();
+                
+                var scores = await statsScoreRepo.GetByGameIdAsync(gameId);
+                
+                foreach (var score in scores)
+                {
+                    var user = await statsUserRepo.GetByIdAsync(score.UserId);
+                    if (user != null)
+                    {
+                        user.TotalGamesPlayed++;
+                        
+                        // Find the highest score
+                        var highestScore = scores.OrderByDescending(s => s.Points).First();
+                        if (score.UserId == highestScore.UserId)
+                        {
+                            user.TotalGamesWon++;
+                        }
+                        
+                        await statsUserRepo.UpdateAsync(user);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating player stats for game {GameId}", gameId);
+            }
+        });
+
+        return game;
+    }
 }

@@ -100,7 +100,7 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
         roundStartTime: null,
         endTime: null,
         currentDrawerId: null,
-        currentWord: null, // Adjust field name based on your DTO
+        currentWord: null,
         scores: []
       });
     };
@@ -143,7 +143,7 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
       if (isDrawer) {
         setCurrentGame(prev => prev ? {
           ...prev,
-          currentWord: data.word // Adjust field name based on your DTO
+          currentWord: data.word
         } : null);
       }
     };

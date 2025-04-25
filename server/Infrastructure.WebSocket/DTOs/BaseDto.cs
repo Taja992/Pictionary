@@ -1,15 +1,5 @@
 namespace Infrastructure.Websocket.DTOs;
 
-/// <summary>
-/// Base class for all Data Transfer Objects used in WebSocket communication.
-/// Provides automatic message type identification and request correlation.
-/// </summary>
-/// <remarks>
-/// All WebSocket messages should inherit from this class to ensure:
-/// 1. Every message has an eventType for message routing
-/// 2. Every message has a requestId for request-response correlation
-/// 3. Consistent message structure across the entire application
-/// </remarks>
 public class BaseDto
 {
     public BaseDto()

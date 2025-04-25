@@ -15,7 +15,6 @@ public class GameRepository : BaseRepository<Game>, IGameRepository
         return await _dbSet
             .Include(g => g.Room)
             .Include(g => g.CurrentDrawer)
-            .Include(g => g.CurrentWord)
             .Include(g => g.Scores)
                 .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
@@ -25,7 +24,6 @@ public class GameRepository : BaseRepository<Game>, IGameRepository
     {
         return await _dbSet
             .Include(g => g.CurrentDrawer)
-            .Include(g => g.CurrentWord)
             .Include(g => g.Scores)
                 .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(g => g.RoomId == roomId && g.Status != GameStatus.GameEnd, cancellationToken);
