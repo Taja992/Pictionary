@@ -107,22 +107,11 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
 
     const handleGameStarted = (data: GameStartedEvent) => {
       console.log('Game started:', data);
-      setCurrentGame(prev => {
-        // Don't change status if it's already 'Drawing' 
-        if (prev?.status === 'Drawing') {
-          return {
-            ...prev,
-            currentRound: data.currentRound
-          };
-        }
-        
-        // Otherwise set to 'Playing' as before
-        return prev ? {
-          ...prev,
-          status: 'Playing',
-          currentRound: data.currentRound
-        } : null;
-      });
+      setCurrentGame(prev => prev ? {
+        ...prev,
+        status: 'Playing',
+        currentRound: data.currentRound
+      } : null);
     };
 
     const handleRoundStarted = (data: RoundStartedEvent) => {

@@ -116,7 +116,7 @@ public class GameOrchestrationService : IGameOrchestrationService
                 // Start the first round (using the StartRound method that takes a service scope)
                 var gameStart = await StartRoundWithScopeAsync(game.Id, scope);
 
-                await gameNotificationService.NotifyGameStarted(freshGameInstance.RoomId, gameStart);
+                //await gameNotificationService.NotifyGameStarted(freshGameInstance.RoomId, gameStart);
             }
             catch (Exception ex)
             {
@@ -201,6 +201,12 @@ public class GameOrchestrationService : IGameOrchestrationService
         
         try
         {
+            // If this is round 1, send game started notification
+            // BEFORE sending round started notification
+            if (game.CurrentRound == 1)
+            {
+                await gameNotificationService.NotifyGameStarted(game.RoomId, game);
+            }
             // Prepare the round (select drawer and word)
             await PrepareRoundWithScopeAsync(game, scope);
             

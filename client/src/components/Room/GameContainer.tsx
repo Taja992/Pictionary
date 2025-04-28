@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { currentGameAtom, currentRoomAtom, userAtom, isDrawerAtom } from '../../atoms';
 import ChatArea from './ChatArea';
