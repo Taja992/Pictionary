@@ -270,7 +270,6 @@ public class GameOrchestrationService : IGameOrchestrationService
     {
         try
         {
-            
             var game = await services.GameRepository.GetByIdAsync(gameId);
             if (game == null)
             {
@@ -286,25 +285,30 @@ public class GameOrchestrationService : IGameOrchestrationService
                 return string.Empty;
             }
     
-            // Find current drawer index
-            var currentDrawerIndex = -1;
-            if (game.CurrentDrawerId != null)
+            // Log all players for troubleshooting
+            _logger.LogDebug("Selecting drawer from {PlayerCount} players: {Players}", 
+                room.Players.Count,
+                string.Join(", ", room.Players.Select(p => $"{p.Username} (Id: {p.Id})")));
+    
+            // Create a list of eligible drawers (all players except the current drawer)
+            List<User> eligibleDrawers = new List<User>(room.Players);
+            
+            // Remove the current drawer from eligible list if they exist
+            if (game.CurrentDrawerId != null && eligibleDrawers.Count > 1)
             {
-                // Find the current drawer in the room players list (not game players)
-                currentDrawerIndex = room.Players.FindIndex(p => p.Id == game.CurrentDrawerId);
-                
-                // If current drawer is not found in the room players list, start from beginning
-                if (currentDrawerIndex == -1)
+                var currentDrawer = eligibleDrawers.FirstOrDefault(p => p.Id == game.CurrentDrawerId);
+                if (currentDrawer != null)
                 {
-                    _logger.LogInformation("Current drawer {DrawerId} not found in room {RoomId}, selecting from beginning", 
-                        game.CurrentDrawerId, game.RoomId);
+                    _logger.LogDebug("Removing current drawer {Username} from eligible drawers", currentDrawer.Username);
+                    eligibleDrawers.Remove(currentDrawer);
                 }
             }
-    
-            // Select next drawer (circular)
-            var nextDrawerIndex = (currentDrawerIndex + 1) % room.Players.Count;
-            var nextDrawer = room.Players[nextDrawerIndex];
-    
+            
+            // Randomly select from the eligible drawers
+            var random = new Random();
+            var randomIndex = random.Next(eligibleDrawers.Count);
+            var nextDrawer = eligibleDrawers[randomIndex];
+            
             // Assign the drawer
             game.CurrentDrawerId = nextDrawer.Id;
             await services.GameRepository.UpdateAsync(game);
@@ -312,7 +316,7 @@ public class GameOrchestrationService : IGameOrchestrationService
             // Notify
             await services.GameNotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
     
-            _logger.LogInformation("Selected {Username} as drawer for game {GameId}", nextDrawer.Username, gameId);
+            _logger.LogInformation("Randomly selected {Username} as drawer for game {GameId}", nextDrawer.Username, gameId);
             return nextDrawer.Id;
         }
         catch (Exception ex)

@@ -24,6 +24,8 @@ public class DrawEventHandler : IDrawEventHandler
     {
         try
         {
+            //deserialize the data to a DrawEventDto object
+            //So we can access the roomId
             var drawEvent = JsonSerializer.Deserialize<DrawEventDto>(drawingData);
             if (drawEvent == null)
             {
