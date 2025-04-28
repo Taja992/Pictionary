@@ -47,6 +47,7 @@ export interface DrawEventDto extends BaseMessage {
     stroke: string;
     strokeWidth: number;
   };
+  IsInProgress: boolean;
 }
 
 // Clear canvas event interface

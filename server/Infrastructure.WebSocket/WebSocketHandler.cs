@@ -110,6 +110,7 @@ public class WebSocketHandler : IWebSocketHandler
             switch (baseMessage.eventType)
             {
                 case "DRAW_LINE":
+                case "DrawEvent":
                 case "CLEAR_CANVAS":
                     await _drawEventHandler.HandleDrawEvent(clientId, message);
                     break;

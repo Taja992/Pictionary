@@ -224,7 +224,8 @@ export class WebSocketClient {
         requestId: this.generateRequestId(),
         RoomId: roomId,
         Username: username,
-        LineData: lineData
+        LineData: lineData,
+        IsInProgress: false
       };
       
       this.socket.send(JSON.stringify(drawEvent));

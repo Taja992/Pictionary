@@ -9,5 +9,5 @@ namespace Application.Services;
 
 public class AuthService : IAuthService
 {
-    
+    //probably wont have auth
 }
