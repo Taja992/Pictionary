@@ -80,11 +80,11 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     const handleGameCreated = (data: GameCreatedEvent) => {
       console.log('Game created:', data);
       setCurrentGame({
-        id: data.gameId,
-        status: data.status,
+        id: data.GameId,
+        status: data.Status,
         currentRound: 0,
-        totalRounds: data.totalRounds,
-        roundTimeSeconds: data.timePerRound,
+        totalRounds: data.TotalRounds,
+        roundTimeSeconds: data.TimePerRound,
         roomId: roomId,
         startTime: new Date().toISOString(),
         roundStartTime: null,
@@ -100,7 +100,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       setCurrentGame(prev => prev ? {
         ...prev,
         status: 'Playing',
-        currentRound: data.currentRound
+        currentRound: data.CurrentRound
       } : null);
       
       // Properly copy room players to game players
@@ -112,23 +112,23 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       setCurrentGame(prev => prev ? {
         ...prev,
         status: 'Drawing',
-        currentRound: data.roundNumber,
-        currentDrawerId: data.drawerId,
-        roundStartTime: data.startTime,
-        roundTimeSeconds: data.durationSeconds
+        currentRound: data.RoundNumber,
+        currentDrawerId: data.DrawerId,
+        roundStartTime: data.StartTime,
+        roundTimeSeconds: data.DurationSeconds
       } : null);
 
-      setIsDrawer(data.drawerId === user.id);
+      setIsDrawer(data.DrawerId === user.id);
     };
 
     const handleDrawerSelected = (data: DrawerSelectedEvent) => {
       console.log('Drawer selected:', data);
       setCurrentGame(prev => prev ? {
         ...prev,
-        currentDrawerId: data.drawerId
+        currentDrawerId: data.DrawerId
       } : null);
 
-      setIsDrawer(data.drawerId === user.id);
+      setIsDrawer(data.DrawerId === user.id);
     };
 
     const handleDrawerWord = (data: DrawerWordEvent) => {
@@ -136,7 +136,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       if (isDrawer) {
         setCurrentGame(prev => prev ? {
           ...prev,
-          currentWord: data.word
+          currentWord: data.Word
         } : null);
       }
     };
@@ -157,7 +157,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       console.log('Game ended:', data);
       setCurrentGame(prev => prev ? {
         ...prev,
-        status: data.status,
+        status: data.Status,
         currentDrawerId: null,
         currentWord: null,
         endTime: new Date().toISOString()
