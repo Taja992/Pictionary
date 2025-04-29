@@ -1,5 +1,5 @@
 import { Link, useRouteError } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { HomeRoute } from '../routeConstants';
 
 export default function NotFoundPage() {
   const error = useRouteError();
@@ -20,7 +20,7 @@ export default function NotFoundPage() {
           >
             Go Back
           </button>
-          <Link to={ROUTES.HOME} className="btn btn-primary">
+          <Link to={HomeRoute} className="btn btn-primary">
             Go Home
           </Link>
         </div>

@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { userAtom } from '../atoms';
 import CreateTempUser from '../components/Home/CreateTempUser';
-import { ROUTES } from '../routes';
 import React from 'react';
+import { LobbyRoute } from '../routeConstants'; // Import from routeConstants
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -14,13 +14,13 @@ export default function HomePage() {
   
   // When registration is successful, navigate to the rooms page
   const handleRegistrationSuccess = () => {
-    navigate(ROUTES.ROOMS);
+    navigate(LobbyRoute); // Use imported constant
   };
   
   // If already registered, navigate immediately
   React.useEffect(() => {
     if (isRegistered) {
-      navigate(ROUTES.ROOMS);
+      navigate(LobbyRoute); // Use imported constant
     }
   }, [isRegistered, navigate]);
   
