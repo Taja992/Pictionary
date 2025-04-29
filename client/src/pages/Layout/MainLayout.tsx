@@ -1,5 +1,4 @@
 import { Outlet, Link } from 'react-router-dom';
-import WebsocketConnectionIndicator from '../../WebSocketConnectionIndicator';
 import { useAtom } from 'jotai';
 import { userAtom } from '../../atoms';
 import { HomeRoute, LobbyRoute } from '../../routeConstants'; // Import the route constants

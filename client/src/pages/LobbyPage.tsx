@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
-import { roomsListAtom} from '../atoms';
+import { roomsListAtom } from '../atoms';
 import api from '../api/api';
 import RoomCard from '../components/Lobby/RoomCard';
-import '../components/lobby/lobby.css';
+import '../components/Lobby/lobby.css';
 import toast from 'react-hot-toast';
 import CreateRoomButton from '../components/Lobby/CreateRoomButton';
 
 export default function LobbyPage() {
   const [rooms, setRooms] = useAtom(roomsListAtom);
   const [isLoading, setIsLoading] = useState(false);
-
 
   // Fetch all rooms
   useEffect(() => {
@@ -29,9 +28,6 @@ export default function LobbyPage() {
 
     fetchRooms();
   }, [setRooms]);
-
-   
-
   
   return (
     <div className="lobby-container">

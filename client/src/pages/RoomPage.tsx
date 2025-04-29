@@ -15,7 +15,7 @@ import {
   ChatArea
 } from '../components/Room';
 import DrawingArea from '../components/Room/DrawingArea';
-import '../components/room/game.css';
+import '../components/Room/game.css';
 import toast from 'react-hot-toast';
 import GamePlayerList from '../components/Room/GamePlayerList';
 import RoomPlayerList from '../components/Room/RoomList';
@@ -27,7 +27,6 @@ export default function RoomPage() {
   
   // Early return if roomId is undefined
   if (!roomId) {
-    // You can handle this in a useEffect or here directly
     useEffect(() => {
       navigate('/rooms');
     }, [navigate]);
@@ -101,7 +100,6 @@ export default function RoomPage() {
   }, [roomId, navigate, setCurrentRoom, setCurrentGame, setRoomPlayers, setGamePlayers]);
 
   const handleSendMessage = (message: string) => {
-    // Keeping this as is
     console.log('Message sent:', message);
   };
 
@@ -127,7 +125,6 @@ export default function RoomPage() {
             <RoomPlayerList />
           </div>
           
-          {/* This is where we place the DrawingArea that handles game state */}
           <DrawingArea roomId={roomId || ''} />
           
           <ChatArea 

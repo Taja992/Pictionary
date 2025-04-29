@@ -52,9 +52,8 @@ interface Message {
 export const messagesAtom = atom<Message[]>([]);
 
 // WebSocket connection status
-export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-
-export const webSocketStatusAtom = atom<WebSocketStatus>('disconnected');
+// export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+// export const webSocketStatusAtom = atom<WebSocketStatus>('disconnected');
 
 
 export interface SystemMessage {

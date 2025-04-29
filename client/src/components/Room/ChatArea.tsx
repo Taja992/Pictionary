@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { websocketClient } from '../../api/websocket-client';
-import { MessageType } from '../../api/websocket-types';
+import { useWsClient } from 'ws-request-hook';
+import { MessageType, ChatMessageDto } from '../../api/websocket-types';
 import { useAtom } from 'jotai';
 import { systemMessagesAtom } from '../../atoms';
 
@@ -25,9 +25,12 @@ export default function ChatArea({
   username
 }: ChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [systemMessages] = useAtom(systemMessagesAtom)
+  const [systemMessages] = useAtom(systemMessagesAtom);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Get the WebSocket client
+  const { send, onMessage } = useWsClient();
   
   // Get the current username
   const currentUsername = username || localStorage.getItem('playerName') || 'You';
@@ -46,10 +49,9 @@ export default function ChatArea({
       isSystem: true
     }));
     
-    // Combine and sort by timestamp (system messages have timestamps)
+    // Combine and sort by timestamp
     const combined = [...messages, ...convertedSystemMessages];
     return combined.sort((a, b) => {
-      // Use IDs as proxies for timestamps since they're Date.now() values
       return parseInt(a.id) - parseInt(b.id);
     });
   }, [messages, systemMessages]);
@@ -58,74 +60,41 @@ export default function ChatArea({
     scrollToBottom();
   }, [allMessages]);
 
-  // Listen for incoming chat messages and room updates from WebSocket
+  // Listen for incoming chat messages
   useEffect(() => {
-    // Chat message handler
-    const handleChatMessage = (data: any) => {
-      // Skip messages from self - they're already in state
-      if (data.Username === currentUsername) {
-        return;
-      }
-      
-      const newMsg = {
-        id: Date.now().toString(),
-        sender: data.Username,
-        text: data.Message,
-        isSystem: false
-      };
-      
-      setMessages(prev => [...prev, newMsg]);
-    };
+    if (!roomId) return;
     
-    // Room update handler - SIMPLIFIED to only add system messages
-    // const handleRoomUpdate = (data: any) => {
-    //   // Check if data is formatted correctly
-    //   if (!data || data.eventType !== 'RoomUpdate') {
-    //     console.warn('Invalid RoomUpdate data received:', data);
-    //     return;
-    //   }
-
-    //   let messageText = '';
-      
-    //   // Check Action value directly from the received data
-    //   if (data.Action === 0) { // Joined
-    //     messageText = `${data.Username} joined the room`;
-    //   } else if (data.Action === 1) { // Left
-    //     messageText = `${data.Username} left the room`;
-    //   } else {
-    //     console.warn('Unknown RoomAction value:', data.Action);
-    //   }
-      
-    //   if (messageText) {
-    //     // Create the new message
-    //     const systemMsg = {
-    //       id: Date.now().toString(),
-    //       sender: 'System',
-    //       text: messageText,
-    //       isSystem: true
-    //     };
+    // Set up message handler with correct parameters
+    const unsubscribe = onMessage<ChatMessageDto>(
+      MessageType.CHAT_MESSAGE,
+      (message) => {
+        // Skip messages from self - they're already in state
+        if (message.Username === currentUsername) {
+          return;
+        }
         
-    //     // Update the state directly
-    //     setMessages(prev => [...prev, systemMsg]);
-    //   }
-    // };
+        const newMsg = {
+          id: Date.now().toString(),
+          sender: message.Username,
+          text: message.Message,
+          isSystem: false
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+      }
+    );
     
-    // Subscribe to both event types
-    websocketClient.on(MessageType.CHAT_MESSAGE, handleChatMessage);
-    // websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
-    
-    // Clean up both
+    // Clean up subscription
     return () => {
-      websocketClient.off(MessageType.CHAT_MESSAGE, handleChatMessage);
-      // websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
+      unsubscribe();
     };
-  }, [currentUsername]);
+  }, [roomId, onMessage, currentUsername]);
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    // Add to local state immediately so the sender sees their message
+    // Add to local state immediately
     const newMsg = {
       id: Date.now().toString(),
       sender: currentUsername,
@@ -135,8 +104,20 @@ export default function ChatArea({
     
     setMessages(prevMessages => [...prevMessages, newMsg]);
     
+    // Generate a unique request ID
+    const requestId = Math.random().toString(36).substring(2, 15);
+    
     // Send through WebSocket
-    websocketClient.sendChatMessage(newMessage, currentUsername, roomId);
+    const chatMessage = {
+      eventType: MessageType.CHAT_MESSAGE,
+      requestId: requestId,
+      Message: newMessage,
+      Username: currentUsername,
+      RoomId: roomId,
+      Timestamp: new Date().toISOString()
+    };
+    
+    send(chatMessage);
     
     // Call the callback if provided
     if (onSendMessage) {
@@ -159,7 +140,7 @@ export default function ChatArea({
             <span className="message-text">{msg.text}</span>
           </div>
         ))}
-        <div ref={messagesEndRef} /> {/* Empty div for scrolling to bottom */}
+        <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSendMessage} className="chat-form">
         <input

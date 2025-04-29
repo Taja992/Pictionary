@@ -1,15 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useAtom } from 'jotai';
-import { websocketClient } from './websocket-client';
+import { useWsClient } from 'ws-request-hook';
 import {
   currentGameAtom, userAtom, isDrawerAtom, 
   roomPlayersAtom, gamePlayersAtom, systemMessagesAtom 
 } from '../atoms';
-import {
-  DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent,
-  GameStartedEvent, MessageType, RoundEndedEvent, RoundStartedEvent,
-  RoomUpdateDto, RoomAction
-} from './websocket-types';
+
+import { DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent, GameStartedEvent, MessageType, RoomAction, RoomJoinDto, RoomLeaveDto, RoomUpdateDto, RoundEndedEvent, RoundStartedEvent } from './websocket-types';
 
 interface RoomWebSocketHandlerProps {
   children?: React.ReactNode;
@@ -25,10 +22,22 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   const [, setSystemMessages] = useAtom(systemMessagesAtom);
   const hasJoinedRef = useRef(false);
   const isNavigatingAwayRef = useRef(false);
+  
+  // Get the client with all its functions
+  const { 
+    send,
+    readyState,
+    onMessage
+  } = useWsClient();
+
+  // Helper function to generate request IDs
+  const generateRequestId = useCallback(() => {
+    return Math.random().toString(36).substring(2, 15);
+  }, []);
 
   // Handle room join/leave
   useEffect(() => {
-    if (!roomId || !user.username || !user.id || !websocketClient.connected) return;
+    if (!roomId || !user.username || !user.id || readyState !== 1) return;
 
     // Reset navigation flag
     isNavigatingAwayRef.current = false;
@@ -38,7 +47,16 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
         if (hasJoinedRef.current) return;
         
         console.log(`Joining room ${roomId} with user ${user.id}`);
-        websocketClient.roomJoin(roomId, user.id, user.username || 'Anonymous');
+        
+        const joinRoomMessage: RoomJoinDto = {
+          eventType: MessageType.ROOM_JOIN,
+          requestId: generateRequestId(),
+          RoomId: roomId,
+          UserId: user.id,
+          Username: user.username || 'Anonymous'
+        };
+        
+        send(joinRoomMessage);
         hasJoinedRef.current = true;
       } catch (err) {
         console.error('Failed to join room:', err);
@@ -49,9 +67,18 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
 
     // Handle page close/refresh
     const handleBeforeUnload = () => {
-      if (websocketClient.connected) {
+      if (readyState === 1) {
         isNavigatingAwayRef.current = true;
-        websocketClient.roomLeave(roomId, user.id, user.username);
+        
+        const leaveRoomMessage: RoomLeaveDto = {
+          eventType: MessageType.ROOM_LEAVE,
+          requestId: generateRequestId(),
+          RoomId: roomId,
+          UserId: user.id,
+          Username: user.username || 'Anonymous'
+        };
+        
+        send(leaveRoomMessage);
         hasJoinedRef.current = false;
       }
     };
@@ -62,176 +89,205 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
-      if (websocketClient.connected) {
+      if (readyState === 1) {
         const isRealNavigation = window.location.pathname !== `/rooms/${roomId}`;
         
         if (isRealNavigation || isNavigatingAwayRef.current) {
           console.log(`Leaving room ${roomId}`);
-          websocketClient.roomLeave(roomId, user.id, user.username);
+          
+          const leaveRoomMessage: RoomLeaveDto = {
+            eventType: MessageType.ROOM_LEAVE,
+            requestId: generateRequestId(),
+            RoomId: roomId,
+            UserId: user.id,
+            Username: user.username || 'Anonymous'
+          };
+          
+          send(leaveRoomMessage);
           hasJoinedRef.current = false;
         }
       }
     };
-  }, [roomId, user.id, user.username]);
+  }, [roomId, user.id, user.username, readyState, send, generateRequestId]);
 
+  // Setup message handling
   useEffect(() => {
-    if (!roomId) return;
+    if (readyState !== 1 || !roomId) return;
+    
+    // Setup all the message handlers
+    const unsubscribeHandlers: (() => void)[] = [];
 
-    const handleGameCreated = (data: GameCreatedEvent) => {
-      console.log('Game created:', data);
-      setCurrentGame({
-        id: data.GameId,
-        status: data.Status,
-        currentRound: 0,
-        totalRounds: data.TotalRounds,
-        roundTimeSeconds: data.TimePerRound,
-        roomId: roomId,
-        startTime: new Date().toISOString(),
-        roundStartTime: null,
-        endTime: null,
-        currentDrawerId: null,
-        currentWord: null,
-        scores: []
-      });
-    };
+    // Game created handler
+    const unsubGameCreated = onMessage<GameCreatedEvent>(
+      MessageType.GAME_CREATED,
+      (message) => {
+        console.log('Game created:', message);
+        setCurrentGame({
+          id: message.GameId,
+          status: message.Status,
+          currentRound: 0,
+          totalRounds: message.TotalRounds,
+          roundTimeSeconds: message.TimePerRound,
+          roomId: roomId,
+          startTime: new Date().toISOString(),
+          roundStartTime: null,
+          endTime: null,
+          currentDrawerId: null,
+          currentWord: null,
+          scores: []
+        });
+      }
+    );
+    unsubscribeHandlers.push(unsubGameCreated);
 
-    const handleGameStarted = (data: GameStartedEvent) => {
-      console.log('Game started:', data);
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        status: 'Playing',
-        currentRound: data.CurrentRound
-      } : null);
-      
-      // Properly copy room players to game players
-      setGamePlayers([...roomPlayers]);
-    };
-
-    const handleRoundStarted = (data: RoundStartedEvent) => {
-      console.log('Round started:', data);
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        status: 'Drawing',
-        currentRound: data.RoundNumber,
-        currentDrawerId: data.DrawerId,
-        roundStartTime: data.StartTime,
-        roundTimeSeconds: data.DurationSeconds
-      } : null);
-
-      setIsDrawer(data.DrawerId === user.id);
-    };
-
-    const handleDrawerSelected = (data: DrawerSelectedEvent) => {
-      console.log('Drawer selected:', data);
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        currentDrawerId: data.DrawerId
-      } : null);
-
-      setIsDrawer(data.DrawerId === user.id);
-    };
-
-    const handleDrawerWord = (data: DrawerWordEvent) => {
-      console.log('Drawer word received');
-      if (isDrawer) {
+    // Game started handler
+    const unsubGameStarted = onMessage<GameStartedEvent>(
+      MessageType.GAME_STARTED,
+      (message) => {
+        console.log('Game started:', message);
         setCurrentGame(prev => prev ? {
           ...prev,
-          currentWord: data.Word
+          status: 'Playing',
+          currentRound: message.CurrentRound
         } : null);
+        
+        // Properly copy room players to game players
+        setGamePlayers([...roomPlayers]);
       }
-    };
+    );
+    unsubscribeHandlers.push(unsubGameStarted);
 
-    const handleRoundEnded = (data: RoundEndedEvent) => {
-      console.log('Round ended:', data);
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        status: 'RoundEnd',
-        currentWord: null,
-        currentDrawerId: null
-      } : null);
-
-      setIsDrawer(false);
-    };
-
-    const handleGameEnded = (data: GameEndedEvent) => {
-      console.log('Game ended:', data);
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        status: data.Status,
-        currentDrawerId: null,
-        currentWord: null,
-        endTime: new Date().toISOString()
-      } : null);
-
-      setIsDrawer(false);
-    };
-
-    // Register handlers
-    websocketClient.on(MessageType.GAME_CREATED, handleGameCreated);
-    websocketClient.on(MessageType.GAME_STARTED, handleGameStarted);
-    websocketClient.on(MessageType.ROUND_STARTED, handleRoundStarted);
-    websocketClient.on(MessageType.DRAWER_SELECTED, handleDrawerSelected);
-    websocketClient.on(MessageType.DRAWER_WORD, handleDrawerWord);
-    websocketClient.on(MessageType.ROUND_ENDED, handleRoundEnded);
-    websocketClient.on(MessageType.GAME_ENDED, handleGameEnded);
-
-    return () => {
-      // Cleanup handlers
-      websocketClient.off(MessageType.GAME_CREATED, handleGameCreated);
-      websocketClient.off(MessageType.GAME_STARTED, handleGameStarted);
-      websocketClient.off(MessageType.ROUND_STARTED, handleRoundStarted);
-      websocketClient.off(MessageType.DRAWER_SELECTED, handleDrawerSelected);
-      websocketClient.off(MessageType.DRAWER_WORD, handleDrawerWord);
-      websocketClient.off(MessageType.ROUND_ENDED, handleRoundEnded);
-      websocketClient.off(MessageType.GAME_ENDED, handleGameEnded);
-    };
-  }, [roomId, user.id, isDrawer, setCurrentGame, setIsDrawer, roomPlayers, setGamePlayers]);
-
-  // Handle room player updates
-  useEffect(() => {
-    if (!roomId) return;
-
-    const handleRoomUpdate = (data: RoomUpdateDto) => {
-      // Handle room join
-      if (data.Action === RoomAction.Joined) {
-        setRoomPlayers(prev => {
-          if (!prev.some(p => p.id === data.UserId)) {
-            return [...prev, {
-              id: data.UserId,
-              name: data.Username
-            }];
-          }
-          return prev;
-        });
-
-        setSystemMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          text: `${data.Username} joined the room`,
-          timestamp: new Date(),
-          type: 'join'
-        }]);
-      } 
-      // Handle room leave
-      else if (data.Action === RoomAction.Left) {
-        setRoomPlayers(prev => prev.filter(p => p.id !== data.UserId));
-
-        setSystemMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          text: `${data.Username} left the room`,
-          timestamp: new Date(),
-          type: 'leave'
-        }]);
+    // Round started handler
+    const unsubRoundStarted = onMessage<RoundStartedEvent>(
+      MessageType.ROUND_STARTED,
+      (message) => {
+        console.log('Round started:', message);
+        setCurrentGame(prev => prev ? {
+          ...prev,
+          status: 'Drawing',
+          currentRound: message.RoundNumber,
+          currentDrawerId: message.DrawerId,
+          roundStartTime: message.StartTime,
+          roundTimeSeconds: message.DurationSeconds
+        } : null);
+        
+        setIsDrawer(message.DrawerId === user.id);
       }
-    };
+    );
+    unsubscribeHandlers.push(unsubRoundStarted);
 
-    // Register room update handler
-    websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
+    // Drawer selected handler
+    const unsubDrawerSelected = onMessage<DrawerSelectedEvent>(
+      MessageType.DRAWER_SELECTED,
+      (message) => {
+        console.log('Drawer selected:', message);
+        setCurrentGame(prev => prev ? {
+          ...prev,
+          currentDrawerId: message.DrawerId
+        } : null);
+        
+        setIsDrawer(message.DrawerId === user.id);
+      }
+    );
+    unsubscribeHandlers.push(unsubDrawerSelected);
 
+    // Drawer word handler
+    const unsubDrawerWord = onMessage<DrawerWordEvent>(
+      MessageType.DRAWER_WORD,
+      (message) => {
+        console.log('Drawer word received');
+        if (isDrawer) {
+          setCurrentGame(prev => prev ? {
+            ...prev,
+            currentWord: message.Word
+          } : null);
+        }
+      }
+    );
+    unsubscribeHandlers.push(unsubDrawerWord);
+
+    // Round ended handler
+    const unsubRoundEnded = onMessage<RoundEndedEvent>(
+      MessageType.ROUND_ENDED,
+      (message) => {
+        console.log('Round ended:', message);
+        setCurrentGame(prev => prev ? {
+          ...prev,
+          status: 'RoundEnd',
+          currentWord: null,
+          currentDrawerId: null
+        } : null);
+        
+        setIsDrawer(false);
+      }
+    );
+    unsubscribeHandlers.push(unsubRoundEnded);
+
+    // Game ended handler
+    const unsubGameEnded = onMessage<GameEndedEvent>(
+      MessageType.GAME_ENDED,
+      (message) => {
+        console.log('Game ended:', message);
+        setCurrentGame(prev => prev ? {
+          ...prev,
+          status: message.Status,
+          currentDrawerId: null,
+          currentWord: null,
+          endTime: new Date().toISOString()
+        } : null);
+        
+        setIsDrawer(false);
+      }
+    );
+    unsubscribeHandlers.push(unsubGameEnded);
+
+    // Room update handler
+    const unsubRoomUpdate = onMessage<RoomUpdateDto>(
+      MessageType.ROOM_UPDATE,
+      (message) => {
+        // Handle room join
+        if (message.Action === RoomAction.Joined) {
+          setRoomPlayers(prev => {
+            if (!prev.some(p => p.id === message.UserId)) {
+              return [...prev, {
+                id: message.UserId,
+                name: message.Username
+              }];
+            }
+            return prev;
+          });
+          
+          setSystemMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            text: `${message.Username} joined the room`,
+            timestamp: new Date(),
+            type: 'join'
+          }]);
+        } 
+        // Handle room leave
+        else if (message.Action === RoomAction.Left) {
+          setRoomPlayers(prev => prev.filter(p => p.id !== message.UserId));
+          
+          setSystemMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            text: `${message.Username} left the room`,
+            timestamp: new Date(),
+            type: 'leave'
+          }]);
+        }
+      }
+    );
+    unsubscribeHandlers.push(unsubRoomUpdate);
+
+    // Cleanup all subscriptions
     return () => {
-      // Remove the handler
-      websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
+      unsubscribeHandlers.forEach(unsub => unsub());
     };
-  }, [roomId, setRoomPlayers, setSystemMessages]);
+  }, [
+    readyState, roomId, user.id, isDrawer, onMessage,
+    setCurrentGame, setIsDrawer, roomPlayers, 
+    setGamePlayers, setRoomPlayers, setSystemMessages
+  ]);
 
   return <>{children}</>;
 }

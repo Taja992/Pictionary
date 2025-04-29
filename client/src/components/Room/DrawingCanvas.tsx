@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { Stage, Layer, Line } from 'react-konva';
 import { useAtom } from 'jotai';
 import { userAtom } from '../../atoms';
-import { websocketClient } from '../../api/websocket-client';
-import { MessageType } from '../../api/websocket-types';
+import { useWsClient } from 'ws-request-hook';
+import { ClearCanvasDto, DrawEventDto, MessageType } from '../../api/websocket-types';
 import DrawingTools from './DrawingTools';
 
 interface LineProps {
@@ -21,6 +21,9 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   // Get current user
   const [user] = useAtom(userAtom);
   const username = user.username || 'Anonymous';
+  
+  // Get WebSocket client
+  const { send, onMessage } = useWsClient();
   
   // Drawing state
   const [lines, setLines] = useState<LineProps[]>([]);
@@ -56,40 +59,44 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
 
   // Listen for drawing events from other users
   useEffect(() => {
-    // Handle draw events
-    const handleDrawEvent = (data: any) => {
-      if (data.Username !== username) { // Only process if from another user
-        const newLine = {
-          points: data.LineData.points,
-          stroke: data.LineData.stroke,
-          strokeWidth: data.LineData.strokeWidth
-        };
-        
-        setLines(prevLines => [...prevLines, newLine]);
+    if (!roomId) return;
+    
+    // Set up draw event handler
+    const unsubscribeDraw = onMessage<DrawEventDto>(
+      MessageType.DRAW_EVENT,
+      (data) => {
+        if (data.Username !== username) {
+          const newLine = {
+            points: data.LineData.points,
+            stroke: data.LineData.stroke,
+            strokeWidth: data.LineData.strokeWidth
+          };
+          
+          setLines(prevLines => [...prevLines, newLine]);
+        }
       }
-    };
+    );
     
-    // Handle clear canvas events
-    const handleClearCanvas = (data: any) => {
-      if (data.Username !== username) { // Only process if from another user
-        setLines([]);
+    // Set up clear canvas handler
+    const unsubscribeClear = onMessage<ClearCanvasDto>(
+      MessageType.CLEAR_CANVAS,
+      (data) => {
+        if (data.Username !== username) {
+          setLines([]);
+        }
       }
-    };
+    );
     
-    // Subscribe to events
-    websocketClient.on(MessageType.DRAW_EVENT, handleDrawEvent);
-    websocketClient.on(MessageType.CLEAR_CANVAS, handleClearCanvas);
-    
-    // Cleanup
+    // Clean up subscriptions
     return () => {
-      websocketClient.off(MessageType.DRAW_EVENT, handleDrawEvent);
-      websocketClient.off(MessageType.CLEAR_CANVAS, handleClearCanvas);
+      unsubscribeDraw();
+      unsubscribeClear();
     };
-  }, [username]);
+  }, [roomId, username, onMessage]);
 
   // Drawing functions
   const handleMouseDown = (e: any) => {
-    if (!isDrawer) return; // Only allow drawing if user is the drawer
+    if (!isDrawer) return;
     
     const pos = e.target.getStage().getPointerPosition();
     setIsDrawing(true);
@@ -120,8 +127,20 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
       // Add line to local state
       setLines([...lines, newLine]);
       
+      // Generate a unique request ID
+      const requestId = Math.random().toString(36).substring(2, 15);
+      
       // Send the line via WebSocket
-      websocketClient.sendDrawEvent(newLine, username, roomId);
+      const drawEvent = {
+        eventType: MessageType.DRAW_EVENT,
+        requestId: requestId,
+        RoomId: roomId,
+        Username: username,
+        LineData: newLine,
+        IsInProgress: false
+      };
+      
+      send(drawEvent);
       
       setCurrentLine([]);
     }
@@ -137,8 +156,19 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   
   const handleClearCanvas = () => {
     setLines([]);
+    
+    // Generate a unique request ID
+    const requestId = Math.random().toString(36).substring(2, 15);
+    
     // Send clear canvas command via WebSocket
-    websocketClient.sendClearCanvas(username, roomId);
+    const clearEvent = {
+      eventType: MessageType.CLEAR_CANVAS,
+      requestId: requestId,
+      RoomId: roomId,
+      Username: username
+    };
+    
+    send(clearEvent);
   };
 
   return (
