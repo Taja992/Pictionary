@@ -37,13 +37,37 @@ export class WebSocketClient {
           return;
         }
 
+        // Get user from localStorage to ensure consistency
+        const storedUserRaw = localStorage.getItem('pictionary_user');
+        let storedUser = null;
+        if (storedUserRaw) {
+          try {
+            storedUser = JSON.parse(storedUserRaw);
+          } catch (e) {
+            console.error('Failed to parse localStorage user', e);
+          }
+        }
+        
+        // Use the most reliable user ID source
+        const userIdToUse = storedUser?.id || userId;
+        const usernameToUse = storedUser?.username || username;
+        
+        if (!userIdToUse || !usernameToUse) {
+          console.error('Missing user ID or username for WebSocket connection');
+          reject(new Error('Missing user ID or username'));
+          return;
+        }
+        
+        console.log('WebSocket connecting with user:', {
+          id: userIdToUse,
+          username: usernameToUse
+        });
+
         // Update status to connecting
         jotaiStore.set(webSocketStatusAtom, 'connecting');
 
         let connectionUrl = this.url;
-        if (userId && username) {
-          connectionUrl += `?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}`;
-        }
+        connectionUrl += `?userId=${encodeURIComponent(userIdToUse)}&username=${encodeURIComponent(usernameToUse)}`;
         
         this.socket = new WebSocket(connectionUrl);
 
@@ -59,15 +83,12 @@ export class WebSocketClient {
         this.socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            // Handle messages with eventType (BaseDTO)
+            // All messages now use eventType
             if (data.eventType) {
               const handlers = this.messageHandlers.get(data.eventType) || [];
               handlers.forEach(handler => handler(data));
-            }
-            // Handle game messages that use 'type' (GameNotificationsDTO)
-            else if (data.type) {
-              const handlers = this.messageHandlers.get(data.type) || [];
-              handlers.forEach(handler => handler(data));
+            } else {
+              console.warn('Received message without eventType:', data);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -109,6 +130,17 @@ export class WebSocketClient {
   }
 
   public roomJoin(roomId: string, userId: string, username: string): void {
+    const storedUser = JSON.parse(localStorage.getItem('pictionary_user') || '{}');
+
+    const userIdToUse = (storedUser && storedUser.id) || userId;
+    const usernameToUse = (storedUser && storedUser.username) || username;
+
+    console.log('Joining room with user:', {
+      id: userIdToUse,
+      username: usernameToUse,
+      room: roomId
+    });
+    
     // Add check to prevent duplicate join
     const joinKey = `${roomId}:${userId}`;
     if (this.isJoiningRoom[joinKey]) {

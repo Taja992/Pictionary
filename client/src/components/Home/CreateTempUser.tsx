@@ -11,7 +11,15 @@ interface CreateTempUserProps {
 export default function CreateTempUser({ onSuccess }: CreateTempUserProps) {
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [, setUser] = useAtom(userAtom);
+  const [user, setUser] = useAtom(userAtom);
+  
+  // If we already have a valid user, redirect immediately
+  React.useEffect(() => {
+    if (user.id && user.username && onSuccess) {
+      console.log('User already exists, redirecting', user);
+      onSuccess();
+    }
+  }, [user, onSuccess]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,11 +34,10 @@ export default function CreateTempUser({ onSuccess }: CreateTempUserProps) {
         username: username.trim() 
       });
       
+      console.log('Temporary user created:', response.data);
+      
       // Update the user atom with the response data
       setUser(response.data);
-      
-      // Save the username to localStorage for persistence
-      localStorage.setItem('username', username.trim());
       
       // Show success message
       toast.success(`Welcome, ${username}!`);

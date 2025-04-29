@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { websocketClient } from '../../api/websocket-client';
 import { MessageType } from '../../api/websocket-types';
+import { useAtom } from 'jotai';
+import { systemMessagesAtom } from '../../atoms';
 
 interface Message {
   id: string;
@@ -23,9 +25,9 @@ export default function ChatArea({
   username
 }: ChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [systemMessages] = useAtom(systemMessagesAtom)
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
   
   // Get the current username
   const currentUsername = username || localStorage.getItem('playerName') || 'You';
@@ -35,15 +37,31 @@ export default function ChatArea({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Combine user messages and system messages
+  const allMessages = useMemo(() => {
+    const convertedSystemMessages = systemMessages.map(msg => ({
+      id: msg.id,
+      sender: 'System',
+      text: msg.text,
+      isSystem: true
+    }));
+    
+    // Combine and sort by timestamp (system messages have timestamps)
+    const combined = [...messages, ...convertedSystemMessages];
+    return combined.sort((a, b) => {
+      // Use IDs as proxies for timestamps since they're Date.now() values
+      return parseInt(a.id) - parseInt(b.id);
+    });
+  }, [messages, systemMessages]);
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [allMessages]);
 
   // Listen for incoming chat messages and room updates from WebSocket
   useEffect(() => {
-    // Chat message handler (updated)
+    // Chat message handler
     const handleChatMessage = (data: any) => {
-
       // Skip messages from self - they're already in state
       if (data.Username === currentUsername) {
         return;
@@ -59,54 +77,49 @@ export default function ChatArea({
       setMessages(prev => [...prev, newMsg]);
     };
     
-    // Room update handler with improved logging
-    const handleRoomUpdate = (data: any) => {
+    // Room update handler - SIMPLIFIED to only add system messages
+    // const handleRoomUpdate = (data: any) => {
+    //   // Check if data is formatted correctly
+    //   if (!data || data.eventType !== 'RoomUpdate') {
+    //     console.warn('Invalid RoomUpdate data received:', data);
+    //     return;
+    //   }
 
-
-      // Check if data is formatted correctly
-      if (!data || data.eventType !== 'RoomUpdate') {
-        console.warn('Invalid RoomUpdate data received:', data);
-        return;
-      }
-
-      let messageText = '';
+    //   let messageText = '';
       
-      // Check Action value directly from the received data
-      if (data.Action === 0) { // Joined
-        messageText = `${data.Username} joined the room`;
-
-      } else if (data.Action === 1) { // Left
-        messageText = `${data.Username} left the room`;
-
-      } else {
-        console.warn('Unknown RoomAction value:', data.Action);
-      }
-
+    //   // Check Action value directly from the received data
+    //   if (data.Action === 0) { // Joined
+    //     messageText = `${data.Username} joined the room`;
+    //   } else if (data.Action === 1) { // Left
+    //     messageText = `${data.Username} left the room`;
+    //   } else {
+    //     console.warn('Unknown RoomAction value:', data.Action);
+    //   }
       
-      if (messageText) {
-        // Create the new message
-        const systemMsg = {
-          id: Date.now().toString(),
-          sender: 'System',
-          text: messageText,
-          isSystem: true
-        };
+    //   if (messageText) {
+    //     // Create the new message
+    //     const systemMsg = {
+    //       id: Date.now().toString(),
+    //       sender: 'System',
+    //       text: messageText,
+    //       isSystem: true
+    //     };
         
-        // Update the state directly rather than using a callback
-        setMessages(prev => [...prev, systemMsg]);
-      }
-    };
+    //     // Update the state directly
+    //     setMessages(prev => [...prev, systemMsg]);
+    //   }
+    // };
     
     // Subscribe to both event types
     websocketClient.on(MessageType.CHAT_MESSAGE, handleChatMessage);
-    websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
+    // websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
     
     // Clean up both
     return () => {
       websocketClient.off(MessageType.CHAT_MESSAGE, handleChatMessage);
-      websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
+      // websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
     };
-  }, [currentUsername, setMessages]);
+  }, [currentUsername]);
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +150,7 @@ export default function ChatArea({
   return (
     <div className="chat-container">
       <div className="chat-messages" style={{ overflowY: 'auto', maxHeight: '400px' }}>
-        {messages.map(msg => (
+        {allMessages.map(msg => (
           <div 
             key={msg.id} 
             className={`chat-message ${msg.isSystem ? 'system-message' : ''}`}

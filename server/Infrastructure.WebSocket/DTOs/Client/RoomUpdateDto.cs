@@ -1,6 +1,6 @@
 using Infrastructure.Websocket.DTOs;
 
-namespace Api.WebSocket.DTOs;
+namespace Infrastructure.WebSocket.DTOs.Client;
 
 public class RoomUpdateDto : BaseDto
 {

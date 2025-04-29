@@ -12,17 +12,20 @@ public class RoomService : IRoomService
     private readonly IUserRepository _userRepository;
     private readonly IGameOrchestrationService _gameService;
     private readonly ILogger<RoomService> _logger;
+    private readonly INotificationService _notificationService;
 
 
     public RoomService(
         IRoomRepository roomRepository,
         IUserRepository userRepository,
+        INotificationService notificationService,
         IGameOrchestrationService gameService,
         ILogger<RoomService> logger)
     {
         _roomRepository = roomRepository;
         _userRepository = userRepository;
         _gameService = gameService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -51,6 +54,8 @@ public class RoomService : IRoomService
         };
 
         await _roomRepository.CreateAsync(room);
+
+        await _notificationService.NotifyRoomCreated(room);
         return room;
     }
 
@@ -126,6 +131,9 @@ public class RoomService : IRoomService
         if (room.OwnerId == userId)
         {
             await _roomRepository.DeleteAsync(roomId);
+            
+            await _notificationService.NotifyRoomDeleted(roomId);
+            
             return true;
         }
         

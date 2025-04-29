@@ -53,19 +53,20 @@ export default function RoomCard({
     }
   };
 
-  const joinRoom = async (passwordToUse?: string) => {
+  const joinRoom = async () => {
     try {
       setIsLoading(true);
+      //passwordToUse?: string
 
       // Join the room with or without password
-      const userId = user.id || '';
+      // const userId = user.id || '';
       
-      // Set joinGame to false to avoid redundancy with WebSocketProvider
-      await api.api.roomJoinRoom(id, { 
-        userId, 
-        password: passwordToUse || null,
-        joinGame: false  // Change to false
-      });
+      // // Set joinGame to false to avoid redundancy with WebSocketProvider
+      // await api.api.roomJoinRoom(id, { 
+      //   userId, 
+      //   password: passwordToUse || null,
+      //   joinGame: false  // Change to false
+      // });
       
       // Get room details after joining
       const roomResponse = await api.api.roomGetRoom(id);
@@ -88,7 +89,7 @@ export default function RoomCard({
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    joinRoom(password);
+    joinRoom();
   };
 
   const handleCancelPassword = () => {

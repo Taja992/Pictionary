@@ -14,7 +14,7 @@ public class ScopedServices
     public IUserRepository UserRepository { get; }
     public IScoreRepository ScoreRepository { get; }
     public IWordService WordService { get; }
-    public IGameNotificationService GameNotificationService { get; }
+    public INotificationService NotificationService { get; }
 
     public ScopedServices(IServiceScope scope)
     {
@@ -23,6 +23,6 @@ public class ScopedServices
         UserRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
         ScoreRepository = scope.ServiceProvider.GetRequiredService<IScoreRepository>();
         WordService = scope.ServiceProvider.GetRequiredService<IWordService>();
-        GameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        NotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
     }
 }

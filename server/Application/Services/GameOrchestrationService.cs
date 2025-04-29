@@ -13,7 +13,7 @@ public class GameOrchestrationService : IGameOrchestrationService
     private readonly IUserRepository _userRepository;
     private readonly IScoreRepository _scoreRepository;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly IGameNotificationService _gameNotificationService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<GameOrchestrationService> _logger;
 
     private static readonly Dictionary<string, CancellationTokenSource> GameTimers = new();
@@ -24,14 +24,14 @@ public class GameOrchestrationService : IGameOrchestrationService
         IUserRepository userRepository,
         IScoreRepository scoreRepository,
         IServiceScopeFactory serviceScopeFactory,
-        IGameNotificationService gameNotificationService, 
+        INotificationService notificationService, 
         ILogger<GameOrchestrationService> logger)
     {
         _gameRepository = gameRepository;
         _roomRepository = roomRepository;
         _userRepository = userRepository;
         _serviceScopeFactory = serviceScopeFactory;
-        _gameNotificationService = gameNotificationService;
+        _notificationService = notificationService;
         _scoreRepository = scoreRepository;
         _logger = logger;
     }
@@ -83,7 +83,7 @@ public class GameOrchestrationService : IGameOrchestrationService
             await _scoreRepository.CreateAsync(score);
         }
 
-        await _gameNotificationService.NotifyGameCreated(roomId, game);
+        await _notificationService.NotifyGameCreated(roomId, game);
 
         // Store the game ID for delayed processing
         _ = Task.Run(async () => 
@@ -96,7 +96,7 @@ public class GameOrchestrationService : IGameOrchestrationService
                 // Use a scoped service provider to get fresh DbContext instances
                 using var scope = _serviceScopeFactory.CreateScope();
                 var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
-                var gameNotificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+                var gameNotificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
                 // Get a fresh game instance with a new DbContext
                 var freshGameInstance = await gameRepository.GetByIdAsync(game.Id);
@@ -197,7 +197,7 @@ public class GameOrchestrationService : IGameOrchestrationService
             // BEFORE sending round started notification
             if (game.CurrentRound == 1)
             {
-                await services.GameNotificationService.NotifyGameStarted(game.RoomId, game);
+                await services.NotificationService.NotifyGameStarted(game.RoomId, game);
             }
             // Prepare the round (select drawer and word)
             await PrepareRoundWithScopeAsync(game, scope);
@@ -209,12 +209,12 @@ public class GameOrchestrationService : IGameOrchestrationService
             var updatedGame = await services.GameRepository.GetByIdAsync(gameId) ?? game;
             
             // Send Notification
-            await services.GameNotificationService.NotifyRoundStarted(updatedGame.RoomId, updatedGame);
+            await services.NotificationService.NotifyRoundStarted(updatedGame.RoomId, updatedGame);
             
             // Send the word to the drawer only
             if (updatedGame.CurrentDrawerId != null && updatedGame.CurrentWord != null)
             {
-                await services.GameNotificationService.SendWordToDrawer(updatedGame.CurrentDrawerId, updatedGame.CurrentWord);
+                await services.NotificationService.SendWordToDrawer(updatedGame.CurrentDrawerId, updatedGame.CurrentWord);
             }
             
             return updatedGame;
@@ -291,7 +291,7 @@ public class GameOrchestrationService : IGameOrchestrationService
                 string.Join(", ", room.Players.Select(p => $"{p.Username} (Id: {p.Id})")));
     
             // Create a list of eligible drawers (all players except the current drawer)
-            List<User> eligibleDrawers = new List<User>(room.Players);
+            List<User> eligibleDrawers = [.. room.Players];
             
             // Remove the current drawer from eligible list if they exist
             if (game.CurrentDrawerId != null && eligibleDrawers.Count > 1)
@@ -314,7 +314,7 @@ public class GameOrchestrationService : IGameOrchestrationService
             await services.GameRepository.UpdateAsync(game);
         
             // Notify
-            await services.GameNotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
+            await services.NotificationService.NotifyDrawerSelected(game.RoomId, nextDrawer.Id, nextDrawer.Username);
     
             _logger.LogInformation("Randomly selected {Username} as drawer for game {GameId}", nextDrawer.Username, gameId);
             return nextDrawer.Id;
@@ -424,7 +424,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         await services.GameRepository.UpdateAsync(game);
         
         // Send notification
-        await services.GameNotificationService.NotifyRoundEnded(game.RoomId, game);
+        await services.NotificationService.NotifyRoundEnded(game.RoomId, game);
         
         _logger.LogInformation("Ended round {Round} in game {GameId}", game.CurrentRound, gameId);
 
@@ -499,7 +499,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
 
         await services.GameRepository.UpdateAsync(game);
-        await services.GameNotificationService.NotifyGameEnded(game.RoomId, game);
+        await services.NotificationService.NotifyGameEnded(game.RoomId, game);
         
         _logger.LogInformation("Ended game {GameId}", gameId);
 

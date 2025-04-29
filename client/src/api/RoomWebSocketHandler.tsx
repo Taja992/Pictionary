@@ -1,59 +1,55 @@
 import React, { useEffect, useRef } from 'react';
 import { useAtom } from 'jotai';
 import { websocketClient } from './websocket-client';
-import {currentGameAtom, userAtom, webSocketStatusAtom, isDrawerAtom } from '../atoms';
-import {DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent,
-  GameStartedEvent, MessageType, RoundEndedEvent, RoundStartedEvent } from './websocket-types';
+import {
+  currentGameAtom, userAtom, isDrawerAtom, 
+  roomPlayersAtom, gamePlayersAtom, systemMessagesAtom 
+} from '../atoms';
+import {
+  DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent,
+  GameStartedEvent, MessageType, RoundEndedEvent, RoundStartedEvent,
+  RoomUpdateDto, RoomAction
+} from './websocket-types';
 
-interface WebSocketProviderProps {
-  children: React.ReactNode;
-  roomId?: string;
+interface RoomWebSocketHandlerProps {
+  children?: React.ReactNode;
+  roomId: string;
 }
 
-export default function WebSocketProvider({ children, roomId }: WebSocketProviderProps) {
-  
+export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocketHandlerProps) {
   const [user] = useAtom(userAtom);
-  const [wsStatus] = useAtom(webSocketStatusAtom);
   const [, setCurrentGame] = useAtom(currentGameAtom);
   const [isDrawer, setIsDrawer] = useAtom(isDrawerAtom);
-  
+  const [roomPlayers, setRoomPlayers] = useAtom(roomPlayersAtom);
+  const [, setGamePlayers] = useAtom(gamePlayersAtom);
+  const [, setSystemMessages] = useAtom(systemMessagesAtom);
   const hasJoinedRef = useRef(false);
   const isNavigatingAwayRef = useRef(false);
 
-  // Handle WebSocket connection and room join
+  // Handle room join/leave
   useEffect(() => {
-    if (!roomId || !user.username || !user.id) return;
-    
-    // Reset navigation flag when joining a room
+    if (!roomId || !user.username || !user.id || !websocketClient.connected) return;
+
+    // Reset navigation flag
     isNavigatingAwayRef.current = false;
     
-    const connectAndJoin = async () => {
+    const joinRoom = async () => {
       try {
-        // If already joined, don't join again
-        if (hasJoinedRef.current) {
-          return;
-        }
+        if (hasJoinedRef.current) return;
         
-        // If not connected, connect first
-        if (wsStatus === 'disconnected' || wsStatus === 'error') {
-          await websocketClient.connect(user.id, user.username);
-        }
-        
-        // Join the room if connected
-        if (websocketClient.connected) {
-          websocketClient.roomJoin(roomId, user.id, user.username || 'Anonymous');
-          hasJoinedRef.current = true;
-        }
+        console.log(`Joining room ${roomId} with user ${user.id}`);
+        websocketClient.roomJoin(roomId, user.id, user.username || 'Anonymous');
+        hasJoinedRef.current = true;
       } catch (err) {
-        console.error('Failed to connect or join room:', err);
+        console.error('Failed to join room:', err);
       }
     };
 
-    connectAndJoin();
+    joinRoom();
 
     // Handle page close/refresh
     const handleBeforeUnload = () => {
-      if (roomId && user.id && user.username && websocketClient.connected) {
+      if (websocketClient.connected) {
         isNavigatingAwayRef.current = true;
         websocketClient.roomLeave(roomId, user.id, user.username);
         hasJoinedRef.current = false;
@@ -64,25 +60,19 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
     
     // Clean up function
     return () => {
-      // Remove event listener
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
-      // Only leave the room if actually navigating away
-      // This prevents leave room when component remounts during React's internal rerendering
-      if (roomId && user.id && user.username && websocketClient.connected) {
-        // Check if this is a real navigation away from the room
-        // and not just a React rerender or StrictMode double-mount
+      if (websocketClient.connected) {
         const isRealNavigation = window.location.pathname !== `/rooms/${roomId}`;
         
         if (isRealNavigation || isNavigatingAwayRef.current) {
+          console.log(`Leaving room ${roomId}`);
           websocketClient.roomLeave(roomId, user.id, user.username);
           hasJoinedRef.current = false;
-        } else {
-          console.log(`Component cleanup but staying in room ${roomId}`);
         }
       }
     };
-  }, [roomId, user.id, user.username, wsStatus]);
+  }, [roomId, user.id, user.username]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -112,6 +102,9 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
         status: 'Playing',
         currentRound: data.currentRound
       } : null);
+      
+      // Properly copy room players to game players
+      setGamePlayers([...roomPlayers]);
     };
 
     const handleRoundStarted = (data: RoundStartedEvent) => {
@@ -173,7 +166,7 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
       setIsDrawer(false);
     };
 
-    // Register using the string literals from MessageType enum
+    // Register handlers
     websocketClient.on(MessageType.GAME_CREATED, handleGameCreated);
     websocketClient.on(MessageType.GAME_STARTED, handleGameStarted);
     websocketClient.on(MessageType.ROUND_STARTED, handleRoundStarted);
@@ -183,6 +176,7 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
     websocketClient.on(MessageType.GAME_ENDED, handleGameEnded);
 
     return () => {
+      // Cleanup handlers
       websocketClient.off(MessageType.GAME_CREATED, handleGameCreated);
       websocketClient.off(MessageType.GAME_STARTED, handleGameStarted);
       websocketClient.off(MessageType.ROUND_STARTED, handleRoundStarted);
@@ -191,7 +185,53 @@ export default function WebSocketProvider({ children, roomId }: WebSocketProvide
       websocketClient.off(MessageType.ROUND_ENDED, handleRoundEnded);
       websocketClient.off(MessageType.GAME_ENDED, handleGameEnded);
     };
-  }, [roomId, user.id, isDrawer, setCurrentGame, setIsDrawer]);
+  }, [roomId, user.id, isDrawer, setCurrentGame, setIsDrawer, roomPlayers, setGamePlayers]);
+
+  // Handle room player updates
+  useEffect(() => {
+    if (!roomId) return;
+
+    const handleRoomUpdate = (data: RoomUpdateDto) => {
+      // Handle room join
+      if (data.Action === RoomAction.Joined) {
+        setRoomPlayers(prev => {
+          if (!prev.some(p => p.id === data.UserId)) {
+            return [...prev, {
+              id: data.UserId,
+              name: data.Username
+            }];
+          }
+          return prev;
+        });
+
+        setSystemMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `${data.Username} joined the room`,
+          timestamp: new Date(),
+          type: 'join'
+        }]);
+      } 
+      // Handle room leave
+      else if (data.Action === RoomAction.Left) {
+        setRoomPlayers(prev => prev.filter(p => p.id !== data.UserId));
+
+        setSystemMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `${data.Username} left the room`,
+          timestamp: new Date(),
+          type: 'leave'
+        }]);
+      }
+    };
+
+    // Register room update handler
+    websocketClient.on(MessageType.ROOM_UPDATE, handleRoomUpdate);
+
+    return () => {
+      // Remove the handler
+      websocketClient.off(MessageType.ROOM_UPDATE, handleRoomUpdate);
+    };
+  }, [roomId, setRoomPlayers, setSystemMessages]);
 
   return <>{children}</>;
 }

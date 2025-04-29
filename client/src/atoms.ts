@@ -34,7 +34,8 @@ export const userAtom = atomWithStorage<UserDto>('pictionary_user', defaultUser)
 
 
 // Players List
-export const playersAtom = atom<PlayerDto[]>([]);
+export const roomPlayersAtom = atom<PlayerDto[]>([]);
+export const gamePlayersAtom = atom<PlayerDto[]>([]);
 
 // Current drawer
 export const currentDrawerAtom = atom<PlayerDto | null>(null);
@@ -56,3 +57,11 @@ export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'err
 export const webSocketStatusAtom = atom<WebSocketStatus>('disconnected');
 
 
+export interface SystemMessage {
+  id: string;
+  text: string;
+  timestamp: Date;
+  type: 'join' | 'leave'
+}
+
+export const systemMessagesAtom = atom<SystemMessage[]>([]);

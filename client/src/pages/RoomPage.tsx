@@ -5,30 +5,42 @@ import {
   userAtom, 
   currentGameAtom, 
   currentRoomAtom,
-  isRoomOwnerAtom,
-  playersAtom, 
-  messagesAtom 
+  messagesAtom,
+  roomPlayersAtom,
+  gamePlayersAtom
 } from '../atoms';
 import api from '../api/api';
 import {
   GameHeader,
-  PlayerList,
   ChatArea
 } from '../components/Room';
-import DrawingArea from '../components/Room/DrawingArea'; // This is your new component
-import WebSocketProvider from '../api/webSocketProvider';
+import DrawingArea from '../components/Room/DrawingArea';
 import '../components/room/game.css';
 import toast from 'react-hot-toast';
+import GamePlayerList from '../components/Room/GamePlayerList';
+import RoomPlayerList from '../components/Room/RoomList';
+import RoomWebSocketHandler from '../api/RoomWebSocketHandler';
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  
+  // Early return if roomId is undefined
+  if (!roomId) {
+    // You can handle this in a useEffect or here directly
+    useEffect(() => {
+      navigate('/rooms');
+    }, [navigate]);
+    
+    return <div className="loading-container">Invalid room. Redirecting...</div>;
+  }
+  
   const [currentGame, setCurrentGame] = useAtom(currentGameAtom);
   const [currentRoom, setCurrentRoom] = useAtom(currentRoomAtom);
   const [user] = useAtom(userAtom);
-  const [players, setPlayers] = useAtom(playersAtom);
   const [messages] = useAtom(messagesAtom);
-  const [isRoomOwner] = useAtom(isRoomOwnerAtom);
+  const [, setRoomPlayers] = useAtom(roomPlayersAtom);
+  const [, setGamePlayers] = useAtom(gamePlayersAtom);
   const [isLoading, setIsLoading] = useState(false);
   
   // Fetch room data when component mounts
@@ -46,21 +58,28 @@ export default function RoomPage() {
         const roomResponse = await api.api.roomGetRoom(roomId);
         setCurrentRoom(roomResponse.data);
         
+        // Update room players list from room data
+        if (roomResponse.data.players) {
+          setRoomPlayers(roomResponse.data.players);
+        }
+        
         // If room has an active game, fetch game details
         if (roomResponse.data.currentGameId) {
           if (roomResponse.data.id) {
             const gameResponse = await api.api.gameOrchestrationGetCurrentGameForRoom(roomResponse.data.id);
             setCurrentGame(gameResponse.data);
-          } else {
-            console.error('Room ID is undefined.');
+            
+            // Initialize game players from scores
+            if (gameResponse.data.scores) {
+              const gamePlayers = gameResponse.data.scores.map((score: any) => ({
+                id: score.userId,
+                name: score.username
+              }));
+              
+              setGamePlayers(gamePlayers);
+            }
           }
         }
-        
-        // Update players list from room data
-        if (roomResponse.data.players) {
-          setPlayers(roomResponse.data.players);
-        }
-        
       } catch (err) {
         console.error('Error fetching room data:', err);
         toast.error('Could not load the room. Redirecting to lobby...');
@@ -76,8 +95,10 @@ export default function RoomPage() {
     return () => {
       setCurrentRoom(null);
       setCurrentGame(null);
+      setRoomPlayers([]);
+      setGamePlayers([]);
     };
-  }, [roomId, navigate, setCurrentRoom, setCurrentGame, setPlayers]);
+  }, [roomId, navigate, setCurrentRoom, setCurrentGame, setRoomPlayers, setGamePlayers]);
 
   const handleSendMessage = (message: string) => {
     // Keeping this as is
@@ -89,7 +110,7 @@ export default function RoomPage() {
   }
 
   return (
-    <WebSocketProvider roomId={roomId}>
+    <RoomWebSocketHandler roomId={roomId}>
       <div className="game-container">
         <GameHeader
           roomName={currentRoom?.name || 'Game Room'}
@@ -101,7 +122,10 @@ export default function RoomPage() {
         />
         
         <div className="game-area">
-          <PlayerList players={players} />
+          <div className="players-section">
+            <GamePlayerList />
+            <RoomPlayerList />
+          </div>
           
           {/* This is where we place the DrawingArea that handles game state */}
           <DrawingArea roomId={roomId || ''} />
@@ -114,6 +138,6 @@ export default function RoomPage() {
           />
         </div>
       </div>
-    </WebSocketProvider>
+    </RoomWebSocketHandler>
   );
 }

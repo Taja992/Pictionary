@@ -19,6 +19,3 @@ export interface RoomParams {
 export interface GameParams {
   gameId: string;
 }
-
-// We'll define the actual router with component mapping in a separate file
-// This file just exports route constants and parameter types

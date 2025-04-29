@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Api.WebSocket.DTOs;
 using Application.Interfaces.WebsocketInterfaces;
+using Infrastructure.WebSocket.DTOs.Client;
 using Microsoft.Extensions.Logging;
 
 namespace Api.WebSocket.Handlers;

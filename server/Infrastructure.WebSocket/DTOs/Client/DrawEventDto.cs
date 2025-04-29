@@ -1,7 +1,6 @@
-using System.Text.Json.Serialization;
 using Infrastructure.Websocket.DTOs;
 
-namespace Api.WebSocket.DTOs;
+namespace Infrastructure.WebSocket.DTOs.Client;
 
 public class DrawEventDto : BaseDto
 {

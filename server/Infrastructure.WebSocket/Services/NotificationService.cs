@@ -4,20 +4,23 @@ using Core.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Infrastructure.Websocket.DTOs;
+using Infrastructure.Websocket.DTOs.Notifications.Game;
+using Infrastructure.WebSocket.DTOs.Notifications.Game;
+using Infrastructure.Websocket.DTOs.Notifications.Room;
 
-namespace Infrastructure.Websocket.DTOs;
+namespace Infrastructure.Websocket.Services;
 
 /// <summary>
 /// Service that sends real-time game event notifications to clients via WebSockets
 /// </summary>
-public class WebSocketGameNotificationService : IGameNotificationService
+public class NotificationService : INotificationService
 {
     private readonly IConnectionManager _connectionManager;
-    private readonly ILogger<WebSocketGameNotificationService> _logger;
+    private readonly ILogger<NotificationService> _logger;
 
-    public WebSocketGameNotificationService(
+    public NotificationService(
         IConnectionManager connectionManager,
-        ILogger<WebSocketGameNotificationService> logger)
+        ILogger<NotificationService> logger)
     {
         _connectionManager = connectionManager;
         _logger = logger;
@@ -30,7 +33,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new GameCreatedNotification(
+            var notification = new GameCreatedDto(
                 game.Id,
                 game.Status.ToString(),
                 game.TotalRounds,
@@ -54,7 +57,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new GameStartedNotification(
+            var notification = new GameStartedDto(
                 game.Id,
                 game.CurrentRound
             );
@@ -77,7 +80,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new RoundStartedNotification(
+            var notification = new RoundStartedDto(
                 game.Id,
                 game.CurrentRound,
                 game.TotalRounds,
@@ -104,7 +107,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new DrawerWordNotification(word);
+            var notification = new DrawerWordDto(word);
             
             // Get active connections for this user
             var clients = await _connectionManager.GetClientIdsForUser(drawerId);
@@ -131,7 +134,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new RoundEndedNotification(
+            var notification = new RoundEndedDto(
                 game.Id,
                 game.CurrentRound,
                 game.TotalRounds,
@@ -156,7 +159,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new GameEndedNotification(
+            var notification = new GameEndedDto(
                 game.Id,
                 game.Status.ToString()
             );
@@ -178,7 +181,7 @@ public class WebSocketGameNotificationService : IGameNotificationService
     {
         try
         {
-            var notification = new DrawerSelectedNotification(drawerId, drawerName);
+            var notification = new DrawerSelectedDto(drawerId, drawerName);
             
             await _connectionManager.BroadcastToRoom(roomId, notification);
             
@@ -187,6 +190,44 @@ public class WebSocketGameNotificationService : IGameNotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to notify drawer selected for room {RoomId}", roomId);
+        }
+    }
+
+    public async Task NotifyRoomCreated(Room room)
+    {
+        try
+        {
+            var notification = new RoomCreatedDto(
+                room.Id,
+                room.Name,
+                room.OwnerId,
+                room.Owner?.Username ?? "Unknown",
+                room.IsPrivate
+            );
+            
+            await _connectionManager.BroadcastToRoom("lobby", notification);
+            
+            _logger.LogInformation("Broadcast room creation: {RoomId}", room.Id);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to notify room creation for {RoomId}", room.Id);
+        }
+    }
+
+    public async Task NotifyRoomDeleted(string roomId)
+    {
+        try
+        {
+            var notification = new RoomDeletedDto(roomId);
+
+            await _connectionManager.BroadcastToRoom("lobby", notification);
+
+            _logger.LogInformation("Broadcast room deleted: {RoomId}", roomId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to notify room deleted for room {RoomId}", roomId);
         }
     }
 }

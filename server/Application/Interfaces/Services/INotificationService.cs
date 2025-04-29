@@ -2,7 +2,7 @@
 
 namespace Application.Interfaces.Services;
 
-public interface IGameNotificationService
+public interface INotificationService
 {
     Task NotifyGameCreated(string roomId, Game game);
     Task NotifyGameStarted(string roomId, Game game);
@@ -11,4 +11,6 @@ public interface IGameNotificationService
     Task NotifyGameEnded(string roomId, Game game);
     Task NotifyDrawerSelected(string roomId, string drawerId, string drawerName);
     Task SendWordToDrawer(string drawerId, string word);
+    Task NotifyRoomCreated(Room room);
+    Task NotifyRoomDeleted(string roomId);
 }

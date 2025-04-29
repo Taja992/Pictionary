@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Api.WebSocket.DTOs;
 using Application.Interfaces.Services;
 using Application.Interfaces.WebsocketInterfaces;
 using Application.Models.Results;
+using Infrastructure.WebSocket.DTOs.Client;
 
 namespace Api.WebSocket.Handlers;
 

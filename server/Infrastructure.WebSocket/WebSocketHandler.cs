@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Application.Interfaces.WebsocketInterfaces;
+using Infrastructure.Websocket.DTOs;
 
 namespace Infrastructure.Websocket;
 
@@ -98,7 +99,6 @@ public class WebSocketHandler : IWebSocketHandler
     {
         try
         {
-            
             var baseMessage = JsonSerializer.Deserialize<BaseDto>(message);
             
             if (baseMessage == null)
@@ -106,29 +106,44 @@ public class WebSocketHandler : IWebSocketHandler
                 _logger.LogWarning("Received invalid message format from {ClientId}", clientId);
                 return;
             }
+            
             // Route the message based on eventType
+            // In the HandleMessageAsync method:
             switch (baseMessage.eventType)
             {
-                case "DRAW_LINE":
-                case "DrawEvent":
-                case "CLEAR_CANVAS":
+                case EventTypes.DrawEvent:
+                case EventTypes.DrawLine: 
+                case EventTypes.ClearCanvas:
                     await _drawEventHandler.HandleDrawEvent(clientId, message);
                     break;
-                    
-                case "ChatMessage":
+        
+                case EventTypes.ChatMessage:
                     await _chatEventHandler.HandleChatEvent(clientId, message);
                     break;
 
-                case "RoomJoin":
+                case EventTypes.RoomJoin:
                     await _roomEventHandler.HandleJoinRoomEvent(clientId, message);
                     break;
-                
-                case "RoomLeave":
+    
+                case EventTypes.RoomLeave:
                     await _roomEventHandler.HandleLeaveRoomEvent(clientId, message);
                     break;
-                
- 
-                    
+    
+                // Notification types
+                case EventTypes.GameCreated:
+                case EventTypes.GameStarted:
+                case EventTypes.RoundStarted:
+                case EventTypes.RoundEnded:
+                case EventTypes.GameEnded:
+                case EventTypes.DrawerSelected:
+                case EventTypes.DrawerWord:
+                case EventTypes.RoomCreated:
+                case EventTypes.RoomDeleted:
+                    // These are outgoing notifications, typically not processed here
+                    _logger.LogInformation("Received notification type {Type} from client {ClientId}", 
+                        baseMessage.eventType, clientId);
+                    break;
+        
                 default:
                     _logger.LogWarning("Unhandled message type: {MessageType}", baseMessage.eventType);
                     break;
@@ -171,19 +186,5 @@ public class WebSocketHandler : IWebSocketHandler
             await SendMessageAsync(clientId, message);
         }
     }
-
-    private class BaseMessageDto
-    {
-        public string Type { get; set; } = string.Empty;
-    }
-
-    private class BaseDto
-    {
-        public string eventType { get; set; } = string.Empty;
-    }
-
-    private class JoinRoomDto : BaseDto
-    {
-        public string RoomId { get; set; } = string.Empty;
-    }
+    
 }

@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Api.WebSocket.DTOs;
 using Application.Interfaces.WebsocketInterfaces;
+using Infrastructure.WebSocket.DTOs.Client;
 
 namespace Api.WebSocket.Handlers;
 

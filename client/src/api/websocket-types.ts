@@ -13,12 +13,9 @@ export enum MessageType {
   ROUND_ENDED = 'round:ended',
   GAME_ENDED = 'game:ended',
   DRAWER_SELECTED = 'drawer:selected',
-  DRAWER_WORD = 'drawer:word'
-}
-
-export interface BaseGameEvent {
-  type: string;
-  gameId: string;
+  DRAWER_WORD = 'drawer:word',
+  ROOM_CREATED = 'room:created',
+  ROOM_DELETED = 'room:deleted'
 }
 
 
@@ -84,42 +81,67 @@ export enum RoomAction {
   Left = 1
 }
 
-//////////////// base game ///////////////////
-export interface GameCreatedEvent extends BaseGameEvent {
-  status: string;
-  totalRounds: number;
-  timePerRound: number;
+//////////////// game notifications ///////////////////
+export interface GameCreatedEvent extends BaseMessage {
+  eventType: MessageType.GAME_CREATED;
+  GameId: string;
+  Status: string;
+  TotalRounds: number;
+  TimePerRound: number;
 }
 
-export interface GameStartedEvent extends BaseGameEvent {
-  currentRound: number;
+export interface GameStartedEvent extends BaseMessage {
+  eventType: MessageType.GAME_STARTED;
+  GameId: string;
+  CurrentRound: number;
 }
 
-export interface RoundStartedEvent extends BaseGameEvent {
-  roundNumber: number;
-  totalRounds: number;
-  drawerId: string;
-  startTime: string;
-  durationSeconds: number;
+export interface RoundStartedEvent extends BaseMessage {
+  eventType: MessageType.ROUND_STARTED;
+  GameId: string;
+  RoundNumber: number;
+  TotalRounds: number;
+  DrawerId: string;
+  StartTime: string;
+  DurationSeconds: number;
 }
 
-export interface DrawerSelectedEvent {
-  type: string;
-  drawerId: string;
-  drawerName: string;
+export interface DrawerSelectedEvent extends BaseMessage {
+  eventType: MessageType.DRAWER_SELECTED;
+  DrawerId: string;
+  DrawerName: string;
 }
 
-export interface DrawerWordEvent {
-  type: string;
-  word: string;
+export interface DrawerWordEvent extends BaseMessage {
+  eventType: MessageType.DRAWER_WORD;
+  Word: string;
 }
 
-export interface RoundEndedEvent extends BaseGameEvent {
-  roundNumber: number;
-  totalRounds: number;
-  isLastRound: boolean;
+export interface RoundEndedEvent extends BaseMessage {
+  eventType: MessageType.ROUND_ENDED;
+  GameId: string;
+  RoundNumber: number;
+  TotalRounds: number;
+  IsLastRound: boolean;
 }
 
-export interface GameEndedEvent extends BaseGameEvent {
-  status: string;
+export interface GameEndedEvent extends BaseMessage {
+  eventType: MessageType.GAME_ENDED;
+  GameId: string;
+  Status: string;
+}
+
+////////////////// Room Notifications //////////////////
+export interface RoomCreatedEvent extends BaseMessage {
+  eventType: MessageType.ROOM_CREATED;
+  RoomId: string;
+  RoomName: string;
+  OwnerId: string;
+  OwnerName: string;
+  IsPrivate: boolean;
+}
+
+export interface RoomDeletedEvent extends BaseMessage {
+  eventType: MessageType.ROOM_DELETED;
+  RoomId: string;
 }
