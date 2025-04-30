@@ -40,20 +40,6 @@ export const gamePlayersAtom = atom<PlayerDto[]>([]);
 // Current drawer
 export const currentDrawerAtom = atom<PlayerDto | null>(null);
 
-// --- Chat Messages ---
-interface Message {
-  id: string;
-  sender: string;
-  text: string;
-  isSystem: boolean;
-  timestamp: Date;
-}
-
-export const messagesAtom = atom<Message[]>([]);
-
-// WebSocket connection status
-// export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-// export const webSocketStatusAtom = atom<WebSocketStatus>('disconnected');
 
 
 export interface SystemMessage {

@@ -35,6 +35,17 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     return Math.random().toString(36).substring(2, 15);
   }, []);
 
+  // Add at the beginning of your component:
+  useEffect(() => {
+    // Clear system messages when first entering a room
+    setSystemMessages([]);
+    
+    // Also clear messages when leaving the room
+    return () => {
+      setSystemMessages([]);
+    };
+  }, [roomId, setSystemMessages]);
+
   // Handle room join/leave
   useEffect(() => {
     if (!roomId || !user.username || !user.id || readyState !== 1) return;

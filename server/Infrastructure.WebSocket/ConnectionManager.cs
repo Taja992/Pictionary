@@ -76,6 +76,8 @@ public class ConnectionManager : IConnectionManager
                 _clientIdToUsername[clientId] = username;
             }
 
+            AddToRoom("lobby", clientId).GetAwaiter().GetResult();
+
             string displayName = !string.IsNullOrEmpty(username) ? username : clientId;
             _logger.LogInformation("Client {ClientId} connected (User: {UserId}, Username: {Username})", 
             clientId, userId, displayName);

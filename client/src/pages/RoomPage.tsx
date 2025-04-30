@@ -5,7 +5,7 @@ import {
   userAtom, 
   currentGameAtom, 
   currentRoomAtom,
-  messagesAtom,
+  //messagesAtom,
   roomPlayersAtom,
   gamePlayersAtom
 } from '../atoms';
@@ -30,6 +30,8 @@ export default function RoomPage() {
     useEffect(() => {
       navigate('/rooms');
     }, [navigate]);
+
+    
     
     return <div className="loading-container">Invalid room. Redirecting...</div>;
   }
@@ -37,10 +39,17 @@ export default function RoomPage() {
   const [currentGame, setCurrentGame] = useAtom(currentGameAtom);
   const [currentRoom, setCurrentRoom] = useAtom(currentRoomAtom);
   const [user] = useAtom(userAtom);
-  const [messages] = useAtom(messagesAtom);
+  // const [messages] = useAtom(messagesAtom);
   const [, setRoomPlayers] = useAtom(roomPlayersAtom);
   const [, setGamePlayers] = useAtom(gamePlayersAtom);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user.id || !user.username) {
+      toast.error('Please enter a username to play');
+      navigate('/');
+    }
+  }, [user, navigate]);
   
   // Fetch room data when component mounts
   useEffect(() => {
@@ -128,7 +137,7 @@ export default function RoomPage() {
           <DrawingArea roomId={roomId || ''} />
           
           <ChatArea 
-            initialMessages={messages} 
+            //initialMessages={messages} 
             onSendMessage={handleSendMessage} 
             roomId={roomId || ''} 
             username={user.username || ''} 

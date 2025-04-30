@@ -1,15 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
-import { roomsListAtom } from '../atoms';
+import { roomsListAtom, userAtom } from '../atoms';
 import api from '../api/api';
 import RoomCard from '../components/Lobby/RoomCard';
 import '../components/Lobby/lobby.css';
 import toast from 'react-hot-toast';
 import CreateRoomButton from '../components/Lobby/CreateRoomButton';
+import LobbyWebSocketHandler from '../api/LobbyWebSocketHandler';
+import { useNavigate } from 'react-router-dom';
 
 export default function LobbyPage() {
   const [rooms, setRooms] = useAtom(roomsListAtom);
   const [isLoading, setIsLoading] = useState(false);
+  const [user] = useAtom(userAtom);
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (!user.id || !user.username) {
+      toast.error('Please enter a username to play');
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   // Fetch all rooms
   useEffect(() => {
@@ -30,6 +42,7 @@ export default function LobbyPage() {
   }, [setRooms]);
   
   return (
+    <LobbyWebSocketHandler>
     <div className="lobby-container">
       <div className="lobby-header">
         <h1 className="lobby-title">Game Rooms</h1>
@@ -59,5 +72,6 @@ export default function LobbyPage() {
         </div>
       )}
     </div>
+    </LobbyWebSocketHandler>
   );
 }

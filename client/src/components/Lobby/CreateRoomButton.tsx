@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
-import { roomsListAtom, userAtom } from '../../atoms';
+import {  userAtom } from '../../atoms';
 import api from '../../api/api';
 import { CreateRoomRequest } from '../../api/api-client';
 import { CreateRoom } from '.';
@@ -13,7 +13,6 @@ interface CreateRoomButtonProps {
 
 export default function CreateRoomButton({ className = '' }: CreateRoomButtonProps) {
   const navigate = useNavigate();
-  const [, setRooms] = useAtom(roomsListAtom);
   const [user] = useAtom(userAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -51,7 +50,7 @@ export default function CreateRoomButton({ className = '' }: CreateRoomButtonPro
       const newRoom = response.data;
 
       // Add the new room to the list
-      setRooms(prevRooms => [...prevRooms, newRoom]);
+      //setRooms(prevRooms => [...prevRooms, newRoom]);
       
       // Close modal
       setShowCreateModal(false);
