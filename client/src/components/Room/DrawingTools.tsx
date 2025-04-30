@@ -28,6 +28,7 @@ export default function DrawingTools({
             onClick={() => onColorChange(color)}
           />
         ))}
+              <button onClick={onClear} className="clear-btn">Clear</button>
       </div>
       <div className="size-picker">
         <button 

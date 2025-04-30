@@ -6,7 +6,8 @@ import {
   roomPlayersAtom, gamePlayersAtom, systemMessagesAtom 
 } from '../atoms';
 
-import { DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent, GameStartedEvent, MessageType, RoomAction, RoomJoinDto, RoomLeaveDto, RoomUpdateDto, RoundEndedEvent, RoundStartedEvent } from './websocket-types';
+import { DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent, GameStartedEvent, JoinedGameEvent, MessageType, RoomAction, RoomJoinDto, RoomLeaveDto, RoomUpdateDto, RoundEndedEvent, RoundStartedEvent } from './websocket-types';
+import api from './api';
 
 interface RoomWebSocketHandlerProps {
   children?: React.ReactNode;
@@ -39,7 +40,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   useEffect(() => {
     // Clear system messages when first entering a room
     setSystemMessages([]);
-    
+
     // Also clear messages when leaving the room
     return () => {
       setSystemMessages([]);
@@ -69,6 +70,30 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
         
         send(joinRoomMessage);
         hasJoinedRef.current = true;
+        setTimeout(() => {
+          if (roomId && user.id) {
+            api.api.roomGetRoom(roomId)
+              .then(response => {
+                if (response.data.currentGameId) {
+                  console.log('Room has an active game, adding self to game players');
+                  setGamePlayers(prev => {
+                    // Don't add if already in the list
+                    if (prev.some(p => p.id === user.id)) {
+                      return prev;
+                    }
+                    return [...prev, {
+                      id: user.id,
+                      name: user.username || 'Anonymous',
+                      isOnline: true
+                    }];
+                  });
+                }
+              })
+              .catch(err => {
+                console.error('Error checking game status after join:', err);
+              });
+          }
+        }, 500); // Small delay to ensure server has processed the join
       } catch (err) {
         console.error('Failed to join room:', err);
       }
@@ -233,6 +258,25 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       }
     );
     unsubscribeHandlers.push(unsubRoundEnded);
+
+    const unsubGameJoined = onMessage<JoinedGameEvent>(
+      MessageType.GAME_JOINED,
+      (message) => {
+        console.log('Player joined game:', message);
+
+        setGamePlayers(prev => {
+          if (prev.some(p => p.id === message.UserId)) {
+            return prev;
+          }
+          return [...prev, {
+            id: message.UserId,
+            name: message.Username,
+            isOnlline: true
+          }]
+        })
+      });
+      unsubscribeHandlers.push(unsubGameJoined);
+
 
     // Game ended handler
     const unsubGameEnded = onMessage<GameEndedEvent>(

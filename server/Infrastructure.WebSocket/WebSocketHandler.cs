@@ -112,7 +112,7 @@ public class WebSocketHandler : IWebSocketHandler
             switch (baseMessage.eventType)
             {
                 case EventTypes.DrawEvent:
-                case EventTypes.DrawLine: 
+                // case EventTypes.DrawLine: 
                 case EventTypes.ClearCanvas:
                     await _drawEventHandler.HandleDrawEvent(clientId, message);
                     break;
@@ -130,19 +130,20 @@ public class WebSocketHandler : IWebSocketHandler
                     break;
     
                 // Notification types
-                case EventTypes.GameCreated:
-                case EventTypes.GameStarted:
-                case EventTypes.RoundStarted:
-                case EventTypes.RoundEnded:
-                case EventTypes.GameEnded:
-                case EventTypes.DrawerSelected:
-                case EventTypes.DrawerWord:
-                case EventTypes.RoomCreated:
-                case EventTypes.RoomDeleted:
+                // case EventTypes.JoinedGame:
+                // case EventTypes.GameCreated:
+                // case EventTypes.GameStarted:
+                // case EventTypes.RoundStarted:
+                // case EventTypes.RoundEnded:
+                // case EventTypes.GameEnded:
+                // case EventTypes.DrawerSelected:
+                // case EventTypes.DrawerWord:
+                // case EventTypes.RoomCreated:
+                // case EventTypes.RoomDeleted:
                     // These are outgoing notifications, typically not processed here
-                    _logger.LogInformation("Received notification type {Type} from client {ClientId}", 
-                        baseMessage.eventType, clientId);
-                    break;
+                    // _logger.LogInformation("Received notification type {Type} from client {ClientId}", 
+                    //     baseMessage.eventType, clientId);
+                    // break;
         
                 default:
                     _logger.LogWarning("Unhandled message type: {MessageType}", baseMessage.eventType);

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAtom } from 'jotai';
-import { currentGameAtom, currentRoomAtom, userAtom, isDrawerAtom, isRoomOwnerAtom } from '../../atoms';
+import { currentGameAtom, isDrawerAtom, isRoomOwnerAtom } from '../../atoms';
 import DrawingCanvas from './DrawingCanvas';
 import CreateGameForm from './CreateGameForm';
 import './game.css';
@@ -11,7 +11,6 @@ interface DrawingAreaProps {
 
 export default function DrawingArea({ roomId }: DrawingAreaProps) {
   const [currentGame] = useAtom(currentGameAtom);
-  const [user] = useAtom(userAtom);
   const [isDrawer] = useAtom(isDrawerAtom);
   const [isRoomOwner] = useAtom(isRoomOwnerAtom);
   const [showCreateGame, setShowCreateGame] = useState(isRoomOwner && !currentGame);

@@ -73,6 +73,27 @@ public class NotificationService : INotificationService
         }
     }
 
+    public async Task NotifyJoinedGame(string roomId, string userId, string username)
+    {
+        try
+        {
+            var notification = new JoinedGameDto(
+                roomId,
+                userId,
+                username
+                );
+
+            await _connectionManager.BroadcastToRoom(roomId, notification);
+
+            _logger.LogInformation("Notified room {RoomId} of username: {Username} joining game", roomId, username);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to notify player joined game for room {RoomId}", roomId);
+        }
+    }
+
     /// <summary>
     /// Notifies all clients in a room that a round has started
     /// </summary>

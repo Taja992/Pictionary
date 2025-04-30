@@ -74,8 +74,15 @@ public class RoomService : IRoomService
     public async Task<JoinRoomResult> JoinRoomAsync(string roomId, string userId, string? password = null, bool joinGame = true)
     {
         _logger.LogInformation("User {UserId} is joining room: {RoomId}", userId, roomId);
-        
+        // _logger.LogInformation("HERHEHERHERHERHERHERHERHER");
         var room = await _roomRepository.GetByIdAsync(roomId);
+        // _logger.LogInformation("JEJEJEJEJEJJEJEJE");
+        // _logger.LogInformation("Room details: ID={RoomId}, HasGame={HasGame}, GameId={GameId}, PlayerCount={PlayerCount}", 
+        // room?.Id, 
+        // room?.CurrentGame != null, 
+        // room?.CurrentGame?.Id ?? "None", 
+        // room?.Players?.Count ?? 0);
+
         if (room == null)
         {
             return JoinRoomResult.NotFound;
@@ -98,9 +105,14 @@ public class RoomService : IRoomService
         {
             // Player is already in the room
             // If there's an active game and joinGame is true, make sure they're also in the game
-            if (joinGame && room.CurrentGame != null && room.Status == RoomStatus.Playing)
+            if (joinGame && room.CurrentGame != null)
             {
                 await _gameService.AddPlayerToGameAsync(room.CurrentGame.Id, userId);
+
+                var player = room.Players.FirstOrDefault(p => p.Id == userId);
+                string username = player?.Username ?? "Unknown";
+                _logger.LogInformation("User {UserId} is already in the room and has been added to the game", userId);
+                await _notificationService.NotifyJoinedGame(roomId, userId, username);
             }
             return JoinRoomResult.AlreadyJoined;
         }
@@ -109,9 +121,14 @@ public class RoomService : IRoomService
         await _roomRepository.AddPlayerToRoomAsync(roomId, userId);
         
         // If there's an active game and joinGame is true, add the player to the game
-        if (joinGame && room.CurrentGame != null && room.Status == RoomStatus.Playing)
+        if (joinGame && room.CurrentGame != null)
         {
             await _gameService.AddPlayerToGameAsync(room.CurrentGame.Id, userId);
+
+                var user = await _userRepository.GetByIdAsync(userId);
+                string username = user?.Username ?? "Unknown";
+                _logger.LogInformation("User {UserId} is joining the game in room: {RoomId}", userId, roomId);
+                await _notificationService.NotifyJoinedGame(roomId, userId, username);
         }
         
         return JoinRoomResult.Success;

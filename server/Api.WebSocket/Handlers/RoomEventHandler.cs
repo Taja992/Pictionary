@@ -25,9 +25,7 @@ public class RoomEventHandler : IRoomEventHandler
 
             var result = await _roomService.JoinRoomAsync(
                 joinRequest.RoomId,
-                joinRequest.UserId,
-                null, // no password handling in websockets
-                false // Don't auto-join the game (This might need to be revisited)
+                joinRequest.UserId
             );
 
             if (result == JoinRoomResult.Success || result == JoinRoomResult.AlreadyJoined)

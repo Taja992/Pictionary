@@ -15,7 +15,8 @@ export enum MessageType {
   DRAWER_SELECTED = 'drawer:selected',
   DRAWER_WORD = 'drawer:word',
   ROOM_CREATED = 'room:created',
-  ROOM_DELETED = 'room:deleted'
+  ROOM_DELETED = 'room:deleted',
+  GAME_JOINED = 'game:joined'
 }
 
 
@@ -129,6 +130,13 @@ export interface GameEndedEvent extends BaseMessage {
   eventType: MessageType.GAME_ENDED;
   GameId: string;
   Status: string;
+}
+
+export interface JoinedGameEvent extends BaseMessage {
+  eventType: MessageType.GAME_JOINED;
+  RoomId: string;
+  UserId: string;
+  Username: string;
 }
 
 ////////////////// Room Notifications //////////////////
