@@ -11,15 +11,18 @@ public class ChatEventHandler : IChatEventHandler
     private readonly IConnectionManager _connectionManager;
     private readonly ILogger<ChatEventHandler> _logger;
     private readonly IGameOrchestrationService _gameService;
-    // private readonly IScoreService _scoreService;
+    private readonly IScoreService _scoreService;
     
-    public ChatEventHandler(IConnectionManager connectionManager, ILogger<ChatEventHandler> logger, IGameOrchestrationService gameService
+    public ChatEventHandler(IConnectionManager connectionManager,
+        ILogger<ChatEventHandler> logger,
+        IGameOrchestrationService gameService,
+        IScoreService scoreService
         )
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _gameService = gameService;
-        // _scoreService = scoreService;
+        _scoreService = scoreService;
     }
 
     public async Task HandleChatEvent(string clientId, string messageJson)
@@ -48,15 +51,19 @@ public class ChatEventHandler : IChatEventHandler
                     {
                         // This is where my method goes to handle the correct guess
                         _logger.LogInformation($"Received chat message: {chatMessage.Message} the correct word is {game.CurrentWord}");
-                        //await _scoreService.CalculateGuessPointsAsync(game.Id, clientId);
+
+                        string userId = await _connectionManager.GetUserIdFromClientId(clientId);
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            await _scoreService.CalculateGuessPointsAsync(game.Id, userId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Cannot award points: No user ID found for client {ClientId}", clientId);
+                        }
                     }
-
-
                 }
             }
-
-
-            
         }
         catch (Exception ex)
         {

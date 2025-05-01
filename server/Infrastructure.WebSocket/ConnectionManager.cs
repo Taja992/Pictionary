@@ -382,5 +382,15 @@ public class ConnectionManager : IConnectionManager
         return null;
     }
 
+    public Task<string> GetUserIdFromClientId(string clientId)
+    {
+        if (!string.IsNullOrEmpty(clientId) && _clientIdToUserId.TryGetValue(clientId, out var userId))
+        {
+            return Task.FromResult(userId);
+        }
+
+        return Task.FromResult(string.Empty);
+    }
+
     
 }

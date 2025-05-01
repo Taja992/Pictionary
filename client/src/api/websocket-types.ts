@@ -16,7 +16,8 @@ export enum MessageType {
   DRAWER_WORD = 'drawer:word',
   ROOM_CREATED = 'room:created',
   ROOM_DELETED = 'room:deleted',
-  GAME_JOINED = 'game:joined'
+  GAME_JOINED = 'game:joined',
+  SCORE_UPDATED = 'score:updated'
 }
 
 
@@ -152,4 +153,12 @@ export interface RoomCreatedEvent extends BaseMessage {
 export interface RoomDeletedEvent extends BaseMessage {
   eventType: MessageType.ROOM_DELETED;
   RoomId: string;
+}
+
+export interface ScoreUpdatedEvent extends BaseMessage {
+  eventType: MessageType.SCORE_UPDATED;
+  GameId: string;
+  UserId: string;
+  PointsGained: number;
+  TotalPoints: number;
 }

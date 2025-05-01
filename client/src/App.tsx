@@ -1,44 +1,41 @@
 import { WsClientProvider } from 'ws-request-hook';
 import { useEffect, useState } from "react";
+import { useAtom } from "jotai";
+import { userAtom } from "./atoms";
 import ApplicationRoutes from "./ApplicationRoutes";
 import './App.css';
-
-// Generate a unique ID for this client
-export const randomUid = crypto.randomUUID();
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { HomeRoute } from './routeConstants';
+import { HomePage } from './pages';
 
 function App() {
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined);
+  const [user] = useAtom(userAtom);
   
   useEffect(() => {
-    // Get the user from local storage
-    const storedUserRaw = localStorage.getItem('pictionary_user');
-    let storedUser = null;
-    if (storedUserRaw) {
-      try {
-        storedUser = JSON.parse(storedUserRaw);
-      } catch (e) {
-        console.error('Failed to parse localStorage user', e);
-      }
+    // Only establish WebSocket connection if user exists with valid ID
+    if (user.id) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'localhost:5295';
+      const isDev = import.meta.env.DEV;
+      const protocol = isDev ? 'ws' : 'wss';
+      
+      // Use the actual database user ID from the API response
+      const finalUrl = `${protocol}://${baseUrl}/ws?userId=${encodeURIComponent(user.id)}&username=${encodeURIComponent(user.username)}`;
+      
+      console.log("Connecting with registered user:", user.id, user.username);
+      setServerUrl(finalUrl);
     }
-    
-    // Build the WebSocket URL with user params if available
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'localhost:5295';
-    const isDev = import.meta.env.DEV;
-    const protocol = isDev ? 'ws' : 'wss';
-    
-    let finalUrl = `${protocol}://${baseUrl}/ws?id=${randomUid}`;
-    
-    // Add user info to URL if available
-    if (storedUser?.id) {
-      finalUrl += `&userId=${encodeURIComponent(storedUser.id)}`;
-      if (storedUser.username) {
-        finalUrl += `&username=${encodeURIComponent(storedUser.username)}`;
-      }
-    }
-    
-    setServerUrl(finalUrl);
-  }, []);
-  
+  }, [user.id, user.username]);
+
+  if (!user.id) {
+    return (
+      <Routes>
+        <Route path={HomeRoute} element={<HomePage />} />
+        <Route path="*" element={<Navigate to={HomeRoute} replace />} />
+      </Routes>
+    );
+  }
+
   if (!serverUrl) {
     return <div>Loading...</div>;
   }

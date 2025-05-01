@@ -49,4 +49,21 @@ public class ScoreRepository : BaseRepository<Score>, IScoreRepository
     {
         await base.DeleteAsync(id, cancellationToken);
     }
+
+    public async Task<Score?> GetScoreForRoundAsync(string gameId, string userId, int roundNumber, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(s =>
+             s.GameId == gameId &&
+             s.UserId == userId &&
+             s.Round == roundNumber,
+             cancellationToken);
+    }
+
+    public async Task<IEnumerable<Score>> GetScoresByGameAndUserAsync(string gameId, string userId, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Where(s => s.GameId == gameId && s.UserId == userId)
+            .ToListAsync(cancellationToken);
+    }
 }

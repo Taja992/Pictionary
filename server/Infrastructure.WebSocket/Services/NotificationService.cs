@@ -252,19 +252,21 @@ public class NotificationService : INotificationService
         }
     }
 
-    public Task NotifyScoreUpdated(string roomId, string gameId)
+    public async Task NotifyScoreUpdated(string gameId,string roomId, string userId, int pointsGained, int totalPoints)
     {
         try
         {
-            var notification = new UpdateScoreDto();
+            var notification = new UpdateScoreDto(gameId, userId, pointsGained, totalPoints);
             
-            // await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _connectionManager.BroadcastToRoom(roomId, notification);
+            
+            _logger.LogInformation("Notified room {RoomId} of score update for user {UserId}: +{PointsGained} (Total: {TotalPoints})", 
+            roomId, userId, pointsGained, totalPoints);
 
         }
         catch (Exception)
         {
-            
+            _logger.LogError("Failed to notify score updated for game {GameId} and user {UserId}", gameId, userId);
         }
-        throw new NotImplementedException();
     }
 }

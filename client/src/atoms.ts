@@ -35,7 +35,14 @@ export const userAtom = atomWithStorage<UserDto>('pictionary_user', defaultUser)
 
 // Players List
 export const roomPlayersAtom = atom<PlayerDto[]>([]);
-export const gamePlayersAtom = atom<PlayerDto[]>([]);
+
+export interface ScoreDto extends PlayerDto {
+  totalPoints?: number;      
+  lastPointsGained?: number; 
+  lastScoreTime?: Date;      
+}
+
+export const gamePlayersAtom = atom<ScoreDto[]>([]);
 
 // Current drawer
 export const currentDrawerAtom = atom<PlayerDto | null>(null);
@@ -50,3 +57,4 @@ export interface SystemMessage {
 }
 
 export const systemMessagesAtom = atom<SystemMessage[]>([]);
+

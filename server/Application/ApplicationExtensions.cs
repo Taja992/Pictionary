@@ -15,6 +15,7 @@ public static class ApplicationExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddHostedService<TempUserCleanupService>();
         services.AddScoped<IWordService, WordService>();
+        services.AddScoped<IScoreService, ScoreService>();
 
 
         

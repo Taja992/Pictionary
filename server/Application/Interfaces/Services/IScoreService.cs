@@ -2,6 +2,7 @@
 
 public interface IScoreService
 {
-    Task AwardPointsForCorrectGuessAsync(string gameId, string userId);
+    
     Task CalculateGuessPointsAsync(string gameId, string userId);
+    Task AwardPointsForCorrectGuessAsync(string gameId, string userId, int points);
 }

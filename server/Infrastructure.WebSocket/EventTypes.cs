@@ -22,4 +22,5 @@ public static class EventTypes
     public const string DrawerWord = "drawer:word";
     public const string RoomCreated = "room:created";
     public const string RoomDeleted = "room:deleted";
+    public const string UpdateScore = "score:updated";
 }

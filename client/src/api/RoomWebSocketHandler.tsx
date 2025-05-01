@@ -6,7 +6,13 @@ import {
   roomPlayersAtom, gamePlayersAtom, systemMessagesAtom 
 } from '../atoms';
 
-import { DrawerSelectedEvent, DrawerWordEvent, GameCreatedEvent, GameEndedEvent, GameStartedEvent, JoinedGameEvent, MessageType, RoomAction, RoomJoinDto, RoomLeaveDto, RoomUpdateDto, RoundEndedEvent, RoundStartedEvent } from './websocket-types';
+import { DrawerSelectedEvent, DrawerWordEvent,
+   GameCreatedEvent, GameEndedEvent,
+    GameStartedEvent, JoinedGameEvent,
+     MessageType, RoomAction, RoomJoinDto,
+      RoomLeaveDto, RoomUpdateDto,
+       RoundEndedEvent, RoundStartedEvent,
+      ScoreUpdatedEvent } from './websocket-types';
 import api from './api';
 
 interface RoomWebSocketHandlerProps {
@@ -271,7 +277,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           return [...prev, {
             id: message.UserId,
             name: message.Username,
-            isOnlline: true
+            isOnline: true
           }]
         })
       });
@@ -334,6 +340,62 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     );
     unsubscribeHandlers.push(unsubRoomUpdate);
 
+    // Score update handler
+    const unsubScoreUpdated = onMessage<ScoreUpdatedEvent>(
+      MessageType.SCORE_UPDATED,
+      (message) => {
+        console.log('Score updated:', message);
+
+        
+        // Update the game players with the new score
+        setGamePlayers(prev => {
+          // Make a copy of the players array
+          const updatedPlayers = [...prev];
+          
+          // Find the player who scored
+          const playerIndex = updatedPlayers.findIndex(p => p.id === message.UserId);
+          
+          if (playerIndex >= 0) {
+            // Player exists, update their score
+            updatedPlayers[playerIndex] = {
+              ...updatedPlayers[playerIndex],
+              totalPoints: message.TotalPoints,
+              lastPointsGained: message.PointsGained,
+              lastScoreTime: new Date()
+            };
+          } else {
+            // Player doesn't exist in the list (rare case)
+            // Find their name from roomPlayers
+            const playerName = roomPlayers.find(p => p.id === message.UserId)?.name || 'Unknown';
+            
+            // Add them to the list
+            updatedPlayers.push({
+              id: message.UserId,
+              name: playerName,
+              isOnline: true,
+              totalPoints: message.TotalPoints,
+              lastPointsGained: message.PointsGained,
+              lastScoreTime: new Date()
+            });
+          }
+          
+          // Sort by total points (highest first)
+          return updatedPlayers.sort((a, b) => 
+            (b.totalPoints || 0) - (a.totalPoints || 0)
+          );
+        });
+        
+        // Optionally add a system message about the score
+        setSystemMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `${roomPlayers.find(p => p.id === message.UserId)?.name || 'Someone'} guessed correctly! (+${message.PointsGained} points)`,
+          timestamp: new Date(),
+          type: 'join' // Reusing 'join' type as it's typically green/positive
+        }]);
+      }
+    );
+    unsubscribeHandlers.push(unsubScoreUpdated);
+
     // Cleanup all subscriptions
     return () => {
       unsubscribeHandlers.forEach(unsub => unsub());
@@ -343,6 +405,8 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     setCurrentGame, setIsDrawer, roomPlayers, 
     setGamePlayers, setRoomPlayers, setSystemMessages
   ]);
+
+  
 
   return <>{children}</>;
 }

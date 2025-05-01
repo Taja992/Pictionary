@@ -29,7 +29,7 @@ export default function ApplicationRoutes() {
       
       <Routes>
         <Route element={<MainLayout />}>
-          <Route path={HomeRoute} element={<HomePage />} />
+          {/* <Route path={HomeRoute} element={<HomePage />} /> */}
           <Route path={LobbyRoute} element={<LobbyPage />} />
           <Route path={RoomDetailRoute} element={<RoomPage />} />
         </Route>

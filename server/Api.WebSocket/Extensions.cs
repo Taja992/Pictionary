@@ -69,6 +69,7 @@ public static class Extensions
         services.AddScoped<IChatEventHandler, ChatEventHandler>();
         services.AddScoped<IRoomEventHandler, RoomEventHandler>(); 
         services.AddScoped<IDrawEventHandler, DrawEventHandler>();
+
         // Add other event handlers
         
         return services;

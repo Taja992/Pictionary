@@ -19,4 +19,5 @@ public interface IConnectionManager
     public string GetClientIdFromSocket(object socket);
     public object? GetSocketFromClientId(string clientId);
     Task SendToClient(string clientId, string message);
+    Task<string> GetUserIdFromClientId(string clientId);
 }
