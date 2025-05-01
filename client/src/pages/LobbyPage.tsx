@@ -20,6 +20,7 @@ export default function LobbyPage() {
     if (!user.id || !user.username) {
       toast.error('Please enter a username to play');
       navigate('/');
+      return;
     }
   }, [user, navigate]);
 

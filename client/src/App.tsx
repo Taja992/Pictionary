@@ -37,7 +37,19 @@ function App() {
   }
 
   if (!serverUrl) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="mb-4">Connecting to server...</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="btn btn-primary"
+          >
+            Reload
+          </button>
+        </div>
+      </div>
+    );
   }
   
   return (
