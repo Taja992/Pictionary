@@ -2,7 +2,7 @@ using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Configurations;
+namespace Infrastructure.Postgres.Configurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

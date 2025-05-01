@@ -2,7 +2,7 @@ using Application.Interfaces.Repositories;
 using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Repositories;
+namespace Infrastructure.Postgres.Repositories;
 
 public class UserRepository : BaseRepository<User>, IUserRepository
 {

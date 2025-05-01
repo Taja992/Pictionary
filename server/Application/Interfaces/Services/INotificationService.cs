@@ -14,4 +14,5 @@ public interface INotificationService
     Task SendWordToDrawer(string drawerId, string word);
     Task NotifyRoomCreated(Room room);
     Task NotifyRoomDeleted(string roomId);
+    Task NotifyScoreUpdated(string roomId, string gameId);
 }

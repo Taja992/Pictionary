@@ -251,4 +251,20 @@ public class NotificationService : INotificationService
             _logger.LogError(ex, "Failed to notify room deleted for room {RoomId}", roomId);
         }
     }
+
+    public Task NotifyScoreUpdated(string roomId, string gameId)
+    {
+        try
+        {
+            var notification = new UpdateScoreDto();
+            
+            // await _connectionManager.BroadcastToRoom(roomId, notification);
+
+        }
+        catch (Exception)
+        {
+            
+        }
+        throw new NotImplementedException();
+    }
 }

@@ -74,9 +74,6 @@ public class GameOrchestrationService : IGameOrchestrationService
                 GameId = game.Id,
                 UserId = player.Id,
                 Points = 0,
-                DrawingPoints = 0,
-                GuessingPoints = 0,
-                RoundNumber = 0,
                 UpdatedAt = DateTime.UtcNow
             };
 
@@ -134,8 +131,8 @@ public class GameOrchestrationService : IGameOrchestrationService
         // Get the current game for the room from the repository
         var currentGame = await _gameRepository.GetCurrentGameForRoomAsync(roomId);
         
-        _logger.LogInformation("Retrieved current game for room {RoomId}: {GameId}", 
-            roomId, currentGame?.Id ?? "No active game");
+        // _logger.LogInformation("Retrieved current game for room {RoomId}: {GameId}", 
+        //     roomId, currentGame?.Id ?? "No active game");
         
         return currentGame;
     }
@@ -540,5 +537,10 @@ public class GameOrchestrationService : IGameOrchestrationService
         });
 
         return game;
+    }
+
+    public Task<bool> HandleCorrectGuessAsync(string gameId, string userId)
+    {
+        throw new NotImplementedException();
     }
 }

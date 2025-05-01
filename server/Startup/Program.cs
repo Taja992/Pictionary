@@ -1,16 +1,13 @@
 using NSwag;
 using NSwag.Generation.Processors.Security;
-using Microsoft.Extensions.Options;
-using Application.Models;
 using Application;
 using Api.Rest;
-using Infrastructure.Websocket.DTOs.DTOs.Postgres;
-using NSwag.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Api.WebSocket;
 using Infrastructure.Websocket;
+using Infrastructure.Postgres;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,7 +59,7 @@ builder.Services.AddWebSocketInfrastructure();
 builder.Services.AddRestApi();
 builder.Services.AddWebSocketApi();
 
-// Right after builder.Services.AddRestApi(); add:
+
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(options =>

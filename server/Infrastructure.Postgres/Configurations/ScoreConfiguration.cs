@@ -2,7 +2,7 @@ using Core.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Configurations;
+namespace Infrastructure.Postgres.Configurations;
 
 public class ScoreConfiguration : IEntityTypeConfiguration<Score>
 {
@@ -14,7 +14,6 @@ public class ScoreConfiguration : IEntityTypeConfiguration<Score>
         builder.Property(s => s.GameId).IsRequired();
         builder.Property(s => s.UserId).IsRequired();
         builder.Property(s => s.Points).IsRequired();
-        builder.Property(s => s.RoundNumber).IsRequired();
         builder.Property(s => s.UpdatedAt).IsRequired();
         
         

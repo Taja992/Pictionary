@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 
-namespace Infrastructure.Websocket.DTOs.DTOs.Postgres.Configurations;
+namespace Infrastructure.Postgres.Configurations;
 
 public class RoomConfiguration : IEntityTypeConfiguration<Room>
 {
@@ -23,7 +23,7 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
         builder.HasOne(r => r.Owner)
             .WithMany()
             .HasForeignKey(r => r.OwnerId)
-            .OnDelete(DeleteBehavior.Cascade); // This is restricted to prevent deletion of all rooms if owner is deleted
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(r => r.Players)
             .WithMany()
