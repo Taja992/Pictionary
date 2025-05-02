@@ -32,7 +32,7 @@ public class ChatEventHandler : IChatEventHandler
             // Parse the message using the standalone DTO
             var chatMessage = JsonSerializer.Deserialize<ChatMessageDto>(messageJson);
             if (chatMessage == null) return;
-
+            
             string roomId = chatMessage.RoomId;
 
 
@@ -40,13 +40,16 @@ public class ChatEventHandler : IChatEventHandler
             
             // Simply broadcast through the connection manager
             await _connectionManager.BroadcastToRoom(roomId, messageJson);
-
-            if (!string.IsNullOrEmpty(chatMessage.Message?.Trim()))
+            _logger.LogInformation($"Received chat {chatMessage}");
+            if (!string.IsNullOrEmpty(chatMessage.Message.Trim()))
             {
                 var game = await _gameService.GetCurrentGameForRoomAsync(roomId);
 
                 if (game != null)
                 {
+                    _logger.LogInformation("Received chat '{Message}' for game {GameId} also the current word is {CurrentWord}", 
+                    chatMessage.Message, 
+                    game.Id, game.CurrentWord);
                     if (string.Equals(chatMessage.Message.Trim(), game.CurrentWord, StringComparison.OrdinalIgnoreCase))
                     {
                         // This is where my method goes to handle the correct guess
@@ -55,7 +58,7 @@ public class ChatEventHandler : IChatEventHandler
                         string userId = await _connectionManager.GetUserIdFromClientId(clientId);
                         if (!string.IsNullOrEmpty(userId))
                         {
-                            await _scoreService.CalculateGuessPointsAsync(game.Id, userId);
+                            await _scoreService.CalculateGuessPointsAsync(game, userId);
                         }
                         else
                         {

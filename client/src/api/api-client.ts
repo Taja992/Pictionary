@@ -50,10 +50,6 @@ export interface CreateGameRequest {
   timePerRound?: number;
 }
 
-export interface AssignDrawerRequest {
-  userId?: string;
-}
-
 export interface RoomDto {
   id?: string;
   name?: string;
@@ -307,41 +303,6 @@ export class Api<
         body: data,
         type: ContentType.Json,
         format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
-     * @name GameOrchestrationEndRound
-     * @request PUT:/api/games/{gameId}/rounds/end
-     */
-    gameOrchestrationEndRound: (gameId: string, params: RequestParams = {}) =>
-      this.request<GameDto, any>({
-        path: `/api/games/${gameId}/rounds/end`,
-        method: "PUT",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags GameOrchestration
-     * @name GameOrchestrationAssignDrawer
-     * @request PUT:/api/games/{gameId}/drawer
-     */
-    gameOrchestrationAssignDrawer: (
-      gameId: string,
-      data: AssignDrawerRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<File, any>({
-        path: `/api/games/${gameId}/drawer`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
         ...params,
       }),
 

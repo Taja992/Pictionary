@@ -82,7 +82,11 @@ export default function RoomPage() {
             if (gameResponse.data.scores) {
               const gamePlayers = gameResponse.data.scores.map((score: any) => ({
                 id: score.userId,
-                name: score.username
+                name: score.username,
+                isOnline: true,
+                totalPoints: score.points,
+                lastPointsGained: 0,
+                lastScoreTime: undefined
               }));
               
               setGamePlayers(gamePlayers);

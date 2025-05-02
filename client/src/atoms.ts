@@ -36,6 +36,12 @@ export const userAtom = atomWithStorage<UserDto>('pictionary_user', defaultUser)
 // Players List
 export const roomPlayersAtom = atom<PlayerDto[]>([]);
 
+
+// export interface PlayerDto {
+//   id?: string;
+//   name?: string;
+//   isOnline?: boolean;
+// }
 export interface ScoreDto extends PlayerDto {
   totalPoints?: number;      
   lastPointsGained?: number; 

@@ -23,9 +23,10 @@ public class GameRepository : BaseRepository<Game>, IGameRepository
     public async Task<Game?> GetCurrentGameForRoomAsync(string roomId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsNoTracking() // This was because when a user left and rejoined, the word wouldnt get updated because it would use old cache 
             .Include(g => g.CurrentDrawer)
             .Include(g => g.Scores)
-                .ThenInclude(s => s.User)
+            .ThenInclude(s => s.User)
             .FirstOrDefaultAsync(g => g.RoomId == roomId && g.Status != GameStatus.GameEnd, cancellationToken);
     }
 

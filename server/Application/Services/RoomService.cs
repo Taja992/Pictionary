@@ -74,14 +74,9 @@ public class RoomService : IRoomService
     public async Task<JoinRoomResult> JoinRoomAsync(string roomId, string userId, string? password = null, bool joinGame = true)
     {
         _logger.LogInformation("User {UserId} is joining room: {RoomId}", userId, roomId);
-        // _logger.LogInformation("HERHEHERHERHERHERHERHERHER");
+
         var room = await _roomRepository.GetByIdAsync(roomId);
-        // _logger.LogInformation("JEJEJEJEJEJJEJEJE");
-        // _logger.LogInformation("Room details: ID={RoomId}, HasGame={HasGame}, GameId={GameId}, PlayerCount={PlayerCount}", 
-        // room?.Id, 
-        // room?.CurrentGame != null, 
-        // room?.CurrentGame?.Id ?? "None", 
-        // room?.Players?.Count ?? 0);
+
 
         if (room == null)
         {

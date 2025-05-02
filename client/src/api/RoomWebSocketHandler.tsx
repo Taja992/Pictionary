@@ -79,27 +79,46 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
         setTimeout(() => {
           if (roomId && user.id) {
             api.api.roomGetRoom(roomId)
-              .then(response => {
-                if (response.data.currentGameId) {
-                  console.log('Room has an active game, adding self to game players');
-                  setGamePlayers(prev => {
-                    // Don't add if already in the list
-                    if (prev.some(p => p.id === user.id)) {
-                      return prev;
-                    }
-                    return [...prev, {
-                      id: user.id,
-                      name: user.username || 'Anonymous',
-                      isOnline: true
-                    }];
-                  });
-                }
-              })
-              .catch(err => {
-                console.error('Error checking game status after join:', err);
-              });
+                .then(response => {
+                  if (response.data.currentGameId) {
+                    console.log('Room has an active game, checking if player is already in game players list');
+
+                    // Get current game data to check if player needs to be added
+                    api.api.gameOrchestrationGetCurrentGameForRoom(roomId)
+                        .then(gameResponse => {
+                          // Check if the user is already in the game players list
+                          const userInGamePlayers = gameResponse.data.scores?.some(
+                              (score: any) => score.userId === user.id
+                          );
+
+                          // Only add the user if not already in scores list
+                          if (!userInGamePlayers) {
+                            setGamePlayers(prev => {
+                              // Don't add if already in the list
+                              if (prev.some(p => p.id === user.id)) {
+                                return prev;
+                              }
+                              return [...prev, {
+                                id: user.id,
+                                name: user.username || 'Anonymous',
+                                isOnline: true,
+                                totalPoints: 0,
+                                lastPointsGained: 0,
+                                lastScoreTime: undefined
+                              }];
+                            });
+                          }
+                        })
+                        .catch(err => {
+                          console.error('Error fetching game details:', err);
+                        });
+                  }
+                })
+                .catch(err => {
+                  console.error('Error checking game status after join:', err);
+                });
           }
-        }, 500); // Small delay to ensure server has processed the join
+        }, 500); // Small delay to ensure server has processed the join // Small delay to ensure server has processed the join
       } catch (err) {
         console.error('Failed to join room:', err);
       }
