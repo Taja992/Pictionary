@@ -29,7 +29,7 @@ public class GameConfiguration : IEntityTypeConfiguration<Game>
             .WithMany()
             .HasForeignKey(g => g.CurrentDrawerId)
             .IsRequired(false)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasMany(g => g.Scores)
             .WithOne(s => s.Game)

@@ -12,6 +12,6 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int TotalGamesPlayed { get; set; } = 0;
     public int TotalGamesWon { get; set; } = 0;
-
     public List<Score> Scores { get; set; } = new List<Score>();
+    public List<Room> OwnedRooms { get; set; } = new List<Room>();
 }

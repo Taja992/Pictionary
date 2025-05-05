@@ -21,5 +21,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt).IsRequired();
         builder.Property(u => u.TotalGamesPlayed).IsRequired();
         builder.Property(u => u.TotalGamesWon).IsRequired();
+
+            builder.HasMany(u => u.OwnedRooms)
+        .WithOne(r => r.Owner)
+        .HasForeignKey(r => r.OwnerId)
+        .OnDelete(DeleteBehavior.Cascade);
     }
 }

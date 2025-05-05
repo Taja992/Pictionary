@@ -25,6 +25,6 @@ public class ScoreConfiguration : IEntityTypeConfiguration<Score>
         builder.HasOne(s => s.User)
             .WithMany(u => u.Scores)
             .HasForeignKey(s => s.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

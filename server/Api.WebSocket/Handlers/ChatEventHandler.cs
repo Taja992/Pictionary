@@ -33,17 +33,23 @@ public class ChatEventHandler : IChatEventHandler
             var chatMessage = JsonSerializer.Deserialize<ChatMessageDto>(messageJson);
             if (chatMessage == null) return;
             
+            
             string roomId = chatMessage.RoomId;
+            var game = await _gameService.GetCurrentGameForRoomAsync(roomId);
 
 
             if (string.IsNullOrEmpty(roomId)) return;
             
             // Simply broadcast through the connection manager
-            await _connectionManager.BroadcastToRoom(roomId, messageJson);
-            _logger.LogInformation($"Received chat {chatMessage}");
+            if (game != null && game.CurrentWord != chatMessage.Message)
+            {
+                _logger.LogInformation($"Received chat message: {chatMessage.Message} the correct word is {game.CurrentWord} - not correct, sending to all clients in room {roomId}");
+                await _connectionManager.BroadcastToRoom(roomId, messageJson);
+            }
+
             if (!string.IsNullOrEmpty(chatMessage.Message.Trim()))
             {
-                var game = await _gameService.GetCurrentGameForRoomAsync(roomId);
+                
 
                 if (game != null)
                 {
@@ -56,13 +62,13 @@ public class ChatEventHandler : IChatEventHandler
                         _logger.LogInformation($"Received chat message: {chatMessage.Message} the correct word is {game.CurrentWord}");
 
                         string userId = await _connectionManager.GetUserIdFromClientId(clientId);
-                        if (!string.IsNullOrEmpty(userId))
+                        if (!string.IsNullOrEmpty(userId) &&  game.CurrentDrawerId != userId)
                         {
                             await _scoreService.CalculateGuessPointsAsync(game, userId);
                         }
                         else
                         {
-                            _logger.LogWarning("Cannot award points: No user ID found for client {ClientId}", clientId);
+                            _logger.LogWarning("Cannot award points: No user ID found for client {ClientId}, or they are the drawer", clientId);
                         }
                     }
                 }
