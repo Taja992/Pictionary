@@ -5,21 +5,17 @@ import {
   userAtom, 
   currentGameAtom, 
   currentRoomAtom,
-  //messagesAtom,
   roomPlayersAtom,
   gamePlayersAtom
 } from '../atoms';
-import api from '../api/api';
-import {
-  GameHeader,
-  ChatArea
-} from '../components/Room';
+import { api, RoomWebSocketHandler } from '../api';
+// import { GameHeader } from '../components/Room';
 import DrawingArea from '../components/Room/DrawingArea';
 import '../components/Room/game.css';
 import toast from 'react-hot-toast';
 import GamePlayerList from '../components/Room/GamePlayerList';
 import RoomPlayerList from '../components/Room/RoomList';
-import RoomWebSocketHandler from '../api/RoomWebSocketHandler';
+import ChatArea from '../components/Room/ChatArea';
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -30,16 +26,13 @@ export default function RoomPage() {
     useEffect(() => {
       navigate('/rooms');
     }, [navigate]);
-
-    
     
     return <div className="loading-container">Invalid room. Redirecting...</div>;
   }
   
-  const [currentGame, setCurrentGame] = useAtom(currentGameAtom);
+  const [, setCurrentGame] = useAtom(currentGameAtom);
   const [currentRoom, setCurrentRoom] = useAtom(currentRoomAtom);
   const [user] = useAtom(userAtom);
-  // const [messages] = useAtom(messagesAtom);
   const [, setRoomPlayers] = useAtom(roomPlayersAtom);
   const [, setGamePlayers] = useAtom(gamePlayersAtom);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,33 +115,34 @@ export default function RoomPage() {
   }
 
   return (
-    <RoomWebSocketHandler roomId={roomId}>
-      <div className="game-container">
-        <GameHeader
-          roomName={currentRoom?.name || 'Game Room'}
-          round={currentGame?.currentRound || 0}
-          maxRounds={currentGame?.totalRounds || 0}
-          word={currentGame?.currentWord || ''}
-          timeLeft={currentGame?.roundTimeSeconds || 0}
-          gameStatus={currentGame?.status || 'waiting'}
-        />
-        
-        <div className="game-area">
-          <div className="players-section">
-            <GamePlayerList />
-            <RoomPlayerList />
-          </div>
-          
-          <DrawingArea roomId={roomId || ''} />
-          
-          <ChatArea 
-            //initialMessages={messages} 
-            onSendMessage={handleSendMessage} 
-            roomId={roomId || ''} 
-            username={user.username || ''} 
+    <div className="full-width-container">
+      <RoomWebSocketHandler roomId={roomId}>
+        <div className="game-container">
+          {/* <GameHeader
+            roomName={currentRoom?.name || 'Game Room'}
+            round={currentGame?.currentRound || 0}
+            maxRounds={currentGame?.totalRounds || 0}
+            word={currentGame?.currentWord || ''}
+            timeLeft={currentGame?.roundTimeSeconds || 0}
+            gameStatus={currentGame?.status || 'waiting'}
           />
+           */}
+          <div className="game-area">
+            <div className="players-section">
+              <GamePlayerList />
+              <RoomPlayerList />
+            </div>
+            
+            <DrawingArea roomId={roomId || ''} />
+            
+            <ChatArea 
+              onSendMessage={handleSendMessage} 
+              roomId={roomId || ''} 
+              username={user.username || ''} 
+            />
+          </div>
         </div>
-      </div>
-    </RoomWebSocketHandler>
+      </RoomWebSocketHandler>
+    </div>
   );
 }

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useAtom } from 'jotai';
 import { currentRoomAtom, currentGameAtom } from '../../atoms';
-import { CreateGameRequest } from '../../api/api-client';
-import api from '../../api/api';
+import { api, CreateGameRequest } from '../../api';
 import toast from 'react-hot-toast';
 
 interface CreateGameFormProps {

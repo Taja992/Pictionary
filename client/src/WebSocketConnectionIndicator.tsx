@@ -1,16 +1,17 @@
 import { useWsClient } from "ws-request-hook";
+import "./WebSocketConnectionIndicator.css";
 
 export default function WebsocketConnectionIndicator() {
   const { readyState } = useWsClient();
   
-  const badgeColor = readyState === 1 ? 'badge-success' : readyState === 2 ? 'badge-warning' : 'badge-error';
+  const isConnected = readyState === 1;
+  const statusText = isConnected ? "Connected" : "Disconnected";
+  const indicatorClass = isConnected ? "indicator-green" : "indicator-red";
   
   return (
-    <span className="absolute top-0 right-0 m-10">
-      <div className="indicator">
-        <span className={'indicator-item badge ' + badgeColor}></span>
-        <button className="btn">Websocket connection status</button>
-      </div>
-    </span>
+    <div className="connection-status">
+      <div className={`status-indicator ${indicatorClass}`}></div>
+      <span className="status-text">{statusText}</span>
+    </div>
   );
 }

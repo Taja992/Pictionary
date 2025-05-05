@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Stage, Layer, Line } from 'react-konva';
 import { useAtom } from 'jotai';
-import { userAtom } from '../../atoms';
+import { userAtom, currentGameAtom } from '../../atoms';
 import { useWsClient } from 'ws-request-hook';
-import { ClearCanvasDto, DrawEventDto, MessageType } from '../../api/websocket-types';
+import { ClearCanvasDto, DrawEventDto, MessageType } from '../../api';
 import DrawingTools from './DrawingTools';
 
 interface LineProps {
@@ -20,6 +20,7 @@ interface DrawingCanvasProps {
 export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) {
   // Get current user
   const [user] = useAtom(userAtom);
+  const [currentGame] = useAtom(currentGameAtom);
   const username = user.username || 'Anonymous';
   
   // Get WebSocket client
@@ -32,29 +33,47 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   const [currentStrokeWidth, setCurrentStrokeWidth] = useState(5);
   const [isDrawing, setIsDrawing] = useState(false);
   const stageRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Canvas dimensions
   const [canvasSize, setCanvasSize] = useState({
     width: 600,
-    height: 500
+    height: 400
   });
   
   // Set canvas size based on container dimensions
   useEffect(() => {
     const updateCanvasSize = () => {
-      const container = document.querySelector('.canvas-container');
-      if (container) {
-        const { width, height } = container.getBoundingClientRect();
+      if (containerRef.current) {
+        const container = containerRef.current;
+        const rect = container.getBoundingClientRect();
+        
+        // Account for padding/border (8px padding on each side = 16px total)
+        const availableWidth = rect.width - 16;
+        const availableHeight = rect.height - 16;
+        
         setCanvasSize({
-          width,
-          height: Math.min(width, height)
+          width: availableWidth,
+          height: availableHeight
         });
       }
     };
     
     updateCanvasSize();
+    
+    // Add resize observer for more accurate size tracking
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    // Also listen to window resize as a fallback
     window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateCanvasSize);
+    };
   }, []);
 
   // Listen for drawing events from other users
@@ -172,54 +191,57 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   };
 
   return (
-    <div className="canvas-container">
+    <>
       {isDrawer && (
         <DrawingTools 
           currentColor={currentColor}
           currentStrokeWidth={currentStrokeWidth}
+          currentWord={isDrawer ? currentGame?.currentWord : null}
           onColorChange={handleColorChange}
           onSizeChange={handleSizeChange}
           onClear={handleClearCanvas}
         />
       )}
       
-      <Stage
-        width={canvasSize.width}
-        height={canvasSize.height}
-        onMouseDown={handleMouseDown}
-        onMousemove={handleMouseMove}
-        onMouseup={handleMouseUp}
-        onMouseleave={handleMouseUp}
-        onTouchstart={handleMouseDown}
-        onTouchmove={handleMouseMove}
-        onTouchend={handleMouseUp}
-        ref={stageRef}
-        className="drawing-stage"
-      >
-        <Layer>
-          {lines.map((line, i) => (
-            <Line
-              key={i}
-              points={line.points}
-              stroke={line.stroke}
-              strokeWidth={line.strokeWidth}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-            />
-          ))}
-          {isDrawing && (
-            <Line
-              points={currentLine}
-              stroke={currentColor}
-              strokeWidth={currentStrokeWidth}
-              tension={0.5}
-              lineCap="round"
-              lineJoin="round"
-            />
-          )}
-        </Layer>
-      </Stage>
-    </div>
+      <div className="canvas-container" ref={containerRef}>
+        <Stage
+          width={canvasSize.width}
+          height={canvasSize.height}
+          onMouseDown={handleMouseDown}
+          onMousemove={handleMouseMove}
+          onMouseup={handleMouseUp}
+          onMouseleave={handleMouseUp}
+          onTouchstart={handleMouseDown}
+          onTouchmove={handleMouseMove}
+          onTouchend={handleMouseUp}
+          ref={stageRef}
+          className="drawing-stage"
+        >
+          <Layer>
+            {lines.map((line, i) => (
+              <Line
+                key={i}
+                points={line.points}
+                stroke={line.stroke}
+                strokeWidth={line.strokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+              />
+            ))}
+            {isDrawing && (
+              <Line
+                points={currentLine}
+                stroke={currentColor}
+                strokeWidth={currentStrokeWidth}
+                tension={0.5}
+                lineCap="round"
+                lineJoin="round"
+              />
+            )}
+          </Layer>
+        </Stage>
+      </div>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Application.Interfaces.Services;
 using Application.Interfaces.WebsocketInterfaces;
 using Infrastructure.WebSocket.DTOs.Client;
@@ -40,8 +41,14 @@ public class ChatEventHandler : IChatEventHandler
 
             if (string.IsNullOrEmpty(roomId)) return;
             
-            // Simply broadcast through the connection manager
-            if (game != null && game.CurrentWord != chatMessage.Message)
+            // Used regex magic to check if the message contains the current word
+            // $@ - A string interpolation marker with verbatim string syntax
+            //  \b - A word boundary anchor - matches the position between a word character and a non-word character
+            // {Regex.Escape(game.CurrentWord)} - The game's current word, but with any special regex characters escaped
+            // \b - Another word boundary anchor on the other side
+            if (game != null && game.CurrentWord != null && !System.Text.RegularExpressions.Regex.IsMatch(chatMessage.Message, 
+                $@"\b{Regex.Escape(game.CurrentWord)}\b", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             {
                 _logger.LogInformation($"Received chat message: {chatMessage.Message} the correct word is {game.CurrentWord} - not correct, sending to all clients in room {roomId}");
                 await _connectionManager.BroadcastToRoom(roomId, messageJson);

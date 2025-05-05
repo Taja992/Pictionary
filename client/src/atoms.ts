@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { RoomDto, UserDto, GameDto, PlayerDto } from './api/api-client';
+import { RoomDto, UserDto, GameDto, PlayerDto } from './api';
 import { atomWithStorage } from 'jotai/utils';
 
 

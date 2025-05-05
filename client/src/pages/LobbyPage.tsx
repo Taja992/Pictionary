@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { roomsListAtom, userAtom } from '../atoms';
-import api from '../api/api';
+import {api, LobbyWebSocketHandler } from '../api';
 import RoomCard from '../components/Lobby/RoomCard';
 import '../components/Lobby/lobby.css';
 import toast from 'react-hot-toast';
 import CreateRoomButton from '../components/Lobby/CreateRoomButton';
-import LobbyWebSocketHandler from '../api/LobbyWebSocketHandler';
 import { useNavigate } from 'react-router-dom';
 
 export default function LobbyPage() {

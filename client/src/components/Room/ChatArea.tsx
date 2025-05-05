@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useWsClient } from 'ws-request-hook';
-import { MessageType, ChatMessageDto } from '../../api/websocket-types';
+import { MessageType, ChatMessageDto } from '../../api';
 import { useAtom } from 'jotai';
 import { systemMessagesAtom } from '../../atoms';
 
@@ -130,14 +130,17 @@ export default function ChatArea({
 
   return (
     <div className="chat-container">
-      <div className="chat-messages" style={{ overflowY: 'auto', maxHeight: '400px' }}>
+      <div className="chat-header">
+        Chat
+      </div>
+      <div className="chat-messages">
         {allMessages.map(msg => (
           <div 
             key={msg.id} 
-            className={`chat-message ${msg.isSystem ? 'system-message' : ''}`}
+            className={`chat-message ${msg.isSystem ? 'system-message' : ''} ${msg.sender === currentUsername ? 'my-message' : ''}`}
           >
-            <span className="message-sender">{msg.sender}:</span>
-            <span className="message-text">{msg.text}</span>
+            {!msg.isSystem && <div className="message-sender">{msg.sender}</div>}
+            <div className="message-text">{msg.text}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />

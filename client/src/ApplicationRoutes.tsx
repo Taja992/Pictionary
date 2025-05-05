@@ -2,7 +2,6 @@ import { Route, Routes } from "react-router-dom";
 // import { useEffect } from "react";
 // import { useAtom } from "jotai";
 // import { userAtom } from "./atoms";
-import WebSocketConnectionIndicator from "./WebSocketConnectionIndicator"; 
 import { 
     LobbyPage, 
     RoomPage, 
@@ -25,7 +24,6 @@ export default function ApplicationRoutes() {
   
   return (
     <>
-      <WebSocketConnectionIndicator />
       
       <Routes>
         <Route path={HomeRoute} element={<HomePage />} />

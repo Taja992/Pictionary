@@ -1,0 +1,36 @@
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background-color: var(--surface-color);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  transition: all 0.2s ease;
+  z-index: 30;
+  border: 1px solid var(--border-color);
+  margin-left: 12px; /* Add margin to separate from the Rooms button */
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.indicator-green {
+  background-color: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.indicator-red {
+  background-color: var(--color-error);
+  box-shadow: 0 0 6px var(--color-error);
+}
+
+.status-text {
+  font-weight: 500;
+  color: var(--text-color);
+}

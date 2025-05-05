@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAtom } from 'jotai';
 import { userAtom } from '../../atoms';
-import api from '../../api/api';
+import { api } from '../../api';
 import toast from 'react-hot-toast';
 
 interface CreateTempUserProps {

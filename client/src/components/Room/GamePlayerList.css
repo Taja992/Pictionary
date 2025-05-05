@@ -8,11 +8,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  background-color: #070404;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .player-info {
@@ -21,13 +23,16 @@
 }
 
 .player-name {
-  font-weight: 500;
-  margin-right: 8px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 2px;
 }
 
 .player-score {
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
 }
 
 .player-status {
@@ -35,37 +40,74 @@
   gap: 8px;
 }
 
-/* When a player is drawing */
-.is-drawing {
-  background-color: #3a4247;
-  border-left: 3px solid #2196f3;
+.drawing-indicator {
+  color: var(--color-drawer);
+  background-color: rgba(94, 96, 206, 0.15);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* When a player has left the room */
+.is-drawing {
+  background-color: rgba(94, 96, 206, 0.1);
+  border-left: 3px solid var(--color-drawer);
+}
+
 .left-room {
   opacity: 0.6;
 }
 
-/* Animations for recent scores */
 .recent-score {
   animation: highlight-score 3s ease;
 }
 
 .points-gained {
-  color: #4caf50;
+  color: var(--color-success);
   font-weight: bold;
   margin-left: 6px;
   animation: pop-in 0.5s ease;
 }
 
 @keyframes highlight-score {
-  0% { background-color: #e8f5e9; }
-  50% { background-color: #c8e6c9; }
-  100% { background-color: #f5f5f5; }
+  0% { background-color: rgba(6, 214, 160, 0.2); }
+  50% { background-color: rgba(6, 214, 160, 0.1); }
+  100% { background-color: var(--surface-color); }
 }
 
 @keyframes pop-in {
   0% { transform: scale(0.5); opacity: 0; }
   70% { transform: scale(1.2); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* Player list container styling */
+.player-list {
+  background-color: var(--surface-alt-color);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.player-list-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  text-align: center;
+  color: var(--text-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.game-players {
+  border-top: 4px solid var(--color-primary);
+}
+
+/* Empty state */
+.no-players {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-muted);
+  font-style: italic;
 }

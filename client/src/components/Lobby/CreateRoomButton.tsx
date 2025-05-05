@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import {  userAtom } from '../../atoms';
-import api from '../../api/api';
-import { CreateRoomRequest } from '../../api/api-client';
+import { api, CreateRoomRequest} from '../../api';
 import { CreateRoom } from '.';
 import toast from 'react-hot-toast';
 

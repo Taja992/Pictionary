@@ -1,0 +1,366 @@
+/* HomePage.css - Styling for the Pictionary homepage */
+
+.homepage {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 0;
+  background-color: var(--bg-color);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(67, 97, 238, 0.08) 0%, transparent 30%), 
+    radial-gradient(circle at 90% 80%, rgba(247, 37, 133, 0.08) 0%, transparent 30%);
+}
+
+.homepage-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.homepage-decoration {
+  position: absolute;
+  opacity: 0.1;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.pencil {
+  width: 150px;
+  height: 150px;
+  top: 10%;
+  left: 15%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234361ee' viewBox='0 0 24 24'%3E%3Cpath d='M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z'/%3E%3C/svg%3E");
+  transform: rotate(-15deg);
+  animation: float 8s ease-in-out infinite;
+}
+
+.brush {
+  width: 180px;
+  height: 180px;
+  bottom: 15%;
+  right: 10%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f72585' viewBox='0 0 24 24'%3E%3Cpath d='M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z'/%3E%3C/svg%3E");
+  transform: rotate(20deg);
+  animation: float 7s ease-in-out infinite reverse;
+}
+
+.eraser {
+  width: 130px;
+  height: 130px;
+  top: 20%;
+  right: 20%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffd60a' viewBox='0 0 24 24'%3E%3Cpath d='M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.77-.78 2.04 0 2.83L5.03 20h7.97l8.41-8.41c.78-.78.78-2.05 0-2.83l-4.85-4.85c-.39-.39-.9-.59-1.42-.59M17 18l-2 2h7v-2'/%3E%3C/svg%3E");
+  transform: rotate(-10deg);
+  animation: float 10s ease-in-out infinite;
+}
+
+.palette {
+  width: 160px;
+  height: 160px;
+  bottom: 25%;
+  left: 12%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2306d6a0' viewBox='0 0 24 24'%3E%3Cpath d='M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E");
+  transform: rotate(15deg);
+  animation: float 9s ease-in-out infinite reverse;
+}
+
+.homepage-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  z-index: 1;
+  text-align: center;
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 1rem;
+  animation: fadeInDown 1s ease-out;
+}
+
+.game-title {
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+  text-shadow: 2px 2px 0px rgba(67, 97, 238, 0.2);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.game-tagline {
+  font-size: 1.5rem;
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: var(--surface-color);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+.login-card:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+}
+
+.login-card h2 {
+  font-size: 2rem;
+  color: var(--text-color);
+  margin-bottom: 0;
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.login-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 120px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(67, 97, 238, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s linear infinite;
+}
+
+.game-features {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  width: 100%;
+  animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 180px;
+  padding: 1.5rem;
+  background-color: var(--surface-color);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1rem;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.draw-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%234361ee' viewBox='0 0 24 24'%3E%3Cpath d='M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z'/%3E%3C/svg%3E");
+}
+
+.guess-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23f72585' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+}
+
+.win-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffd60a' viewBox='0 0 24 24'%3E%3Cpath d='M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm7 6c-1.65 0-3-1.35-3-3V5h6v6c0 1.65-1.35 3-3 3zm7-6c0 1.3-.84 2.4-2 2.82V7h2v1z'/%3E%3C/svg%3E");
+}
+
+.feature h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.feature p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Home form specific styling */
+.home-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.name-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.name-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+  background-color: white;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.button-group .btn {
+  padding: 0.85rem 2.25rem;
+  min-width: 140px;
+  font-size: 1.1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(67, 97, 238, 0.15);
+  transition: all 0.2s ease;
+}
+
+.button-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(67, 97, 238, 0.2);
+}
+
+.button-group .btn:active {
+  transform: translateY(0);
+}
+
+/* Animation keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--rotation, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--rotation, 0deg)); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 3rem;
+  }
+  
+  .game-features {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .feature {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .homepage-decoration {
+    opacity: 0.05;
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 2.5rem;
+  }
+  
+  .login-card {
+    padding: 1.5rem;
+  }
+  
+  .homepage-decoration {
+    display: none;
+  }
+}

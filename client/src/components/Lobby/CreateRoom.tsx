@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreateRoomRequest } from '../../api/api-client';
+import { CreateRoomRequest } from '../../api';
 
 interface CreateRoomProps {
   isOpen: boolean;

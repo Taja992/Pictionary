@@ -61,11 +61,7 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
       return (
         <div className="drawing-area">
           <DrawingCanvas isDrawer={isDrawer} roomId={roomId} />
-          {isDrawer && (
-            <div className="drawer-indicator">
-              You are drawing: <strong>{currentGame.currentWord}</strong>
-            </div>
-          )}
+          {/* Removed the floating indicator - the word is already shown in the drawing tools */}
         </div>
       );
     
@@ -73,6 +69,7 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
       return (
         <div className="drawing-area waiting-container">
           <h2>Round {currentGame.currentRound} ended!</h2>
+          <p className="waiting-message">The word was: <strong>{currentGame.currentWord}</strong></p>
           <p className="waiting-message">Preparing for next round...</p>
         </div>
       );
@@ -84,7 +81,7 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
           <p className="waiting-message">Thanks for playing!</p>
           {isRoomOwner && (
             <button 
-              className="create-new-game-btn"
+              className="create-game-btn mt-4"
               onClick={() => setShowCreateGame(true)}
             >
               Create New Game
