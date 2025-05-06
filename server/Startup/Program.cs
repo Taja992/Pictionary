@@ -8,6 +8,7 @@ using System.Text;
 using Api.WebSocket;
 using Infrastructure.Websocket;
 using Infrastructure.Postgres;
+using Microsoft.EntityFrameworkCore;
 
 
 
@@ -96,6 +97,21 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<PictionaryDbContext>();
+        Console.WriteLine("Attempting database migration...");
+        dbContext.Database.Migrate();
+        Console.WriteLine("Database migration completed successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database migration error: {ex.Message}");
+    }
+}
+
 // Use CORS with the Allowed Origins
 app.UseCors("AllowedOrigins");
 
@@ -122,15 +138,12 @@ app.UseHttpsRedirection();
 // {
 //     KeepAliveInterval = TimeSpan.FromMinutes(2)
 // });
-app.UseRestApi();
+app.UseWebSockets(); 
 app.UseRouting();
-app.UseWebSockets();
-app.UseWebSocketApi();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRestApi();
+app.UseWebSocketApi();
 
-
-// Add WebSocket pipeline
-// app.UseWebSocketApi();
 
 app.Run();
