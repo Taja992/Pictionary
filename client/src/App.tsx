@@ -56,9 +56,11 @@ function App() {
       const isDev = import.meta.env.DEV;
       const protocol = isDev ? 'ws' : 'wss';
       
-      // Use the actual database user ID from the API response
-      const finalUrl = `${protocol}://${baseUrl}/ws?userId=${encodeURIComponent(user.id)}&username=${encodeURIComponent(user.username)}`;
-      
+    // Remove any protocol prefixes (http://, https://, or malformed https//)
+    const cleanUrl = baseUrl.replace(/^https?[:\/]*\/\/|^https\/\//, '');
+    
+    // Construct the WebSocket URL
+    const finalUrl = `${protocol}://${cleanUrl}/ws?userId=${encodeURIComponent(user.id)}&username=${encodeURIComponent(user.username)}`;
       console.log("Connecting with registered user:", user.id, user.username);
       setServerUrl(finalUrl);
     }
