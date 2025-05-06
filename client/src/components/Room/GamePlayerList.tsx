@@ -1,7 +1,7 @@
 import { useAtom } from 'jotai';
 import { gamePlayersAtom, roomPlayersAtom, currentGameAtom } from '../../atoms';
 import { useEffect, useState } from 'react';
-import './GamePlayerList.css'; // Make sure to create this CSS file for animations
+import './GamePlayerList.css';
 
 export default function GamePlayerList() {
   const [gamePlayers] = useAtom(gamePlayersAtom);

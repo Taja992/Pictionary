@@ -29,8 +29,12 @@ const defaultUser: UserDto = {
   totalGamesWon: 0
 };
 
-// Create the user atom
-export const userAtom = atomWithStorage<UserDto>('pictionary_user', defaultUser);
+interface UserDtoExpiration extends UserDto {
+  expiresAt?: number;
+}
+
+// Create the user atom with expiration time
+export const userAtom = atomWithStorage<UserDtoExpiration>('pictionary_user', defaultUser);
 
 
 // Players List
@@ -42,7 +46,7 @@ export const roomPlayersAtom = atom<PlayerDto[]>([]);
 //   name?: string;
 //   isOnline?: boolean;
 // }
-export interface ScoreDto extends PlayerDto {
+interface ScoreDto extends PlayerDto {
   totalPoints?: number;      
   lastPointsGained?: number; 
   lastScoreTime?: Date;      

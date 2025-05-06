@@ -37,7 +37,7 @@ export default function CreateTempUser({ onSuccess }: CreateTempUserProps) {
       console.log('Temporary user created:', response.data);
       
       // Update the user atom with the response data
-      setUser(response.data);
+      setUser({...response.data, expiresAt: Date.now() + 3600000});
       
       // Show success message
       toast.success(`Welcome, ${username}!`);

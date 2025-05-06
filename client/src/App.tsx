@@ -3,15 +3,52 @@ import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { userAtom } from "./atoms";
 import ApplicationRoutes from "./ApplicationRoutes";
-import './App.css';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { HomeRoute } from './routeConstants';
 import { HomePage } from './pages';
+import { api } from './api';
+import toast from 'react-hot-toast';
 
 function App() {
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined);
-  const [user] = useAtom(userAtom);
+  const [user, setUser] = useAtom(userAtom);
   
+  useEffect(() => {
+    const validateUser = async () => {
+      // Check local expiration first
+      if (user.id && user.expiresAt && Date.now() > user.expiresAt) {
+        console.log('User session expired locally');
+        setUser({
+          id: '',
+          username: '',
+          totalGamesPlayed: 0,
+          totalGamesWon: 0
+        });
+        toast.error('Your session has expired. Please log in again.');
+        return;
+      }
+  
+      // If not expired locally, check with server
+      if (user.id) {
+        try {
+          await api.api.userGetUser(user.id);
+          console.log('User validated with server');
+        } catch (error) {
+          console.log('User validation failed - not found in database');
+          setUser({
+            id: '',
+            username: '',
+            totalGamesPlayed: 0,
+            totalGamesWon: 0
+          });
+          toast.error('Your session has expired. Please log in again.');
+        }
+      }
+    };
+  
+    validateUser();
+  }, [user.id, user.expiresAt, setUser]);
+
   useEffect(() => {
     // Only establish WebSocket connection if user exists with valid ID
     if (user.id) {

@@ -21,9 +21,9 @@ builder.Services.AddEndpointsApiExplorer();
 // Configure CORS for development
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Development", policy =>
+    options.AddPolicy("AllowedOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")  // Default Vite dev server port
+        policy.WithOrigins("http://localhost:5173", "FirebaseHere")  // Default Vite dev server port
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();  // Important for cookies/auth
@@ -84,14 +84,13 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+// Use CORS with the Allowed Origins
+app.UseCors("AllowedOrigins");
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    
-    // Use CORS with the development policy
-    app.UseCors("Development");
-    
     // Enable OpenAPI and Swagger UI
     app.UseOpenApi();
     app.UseSwaggerUi();
