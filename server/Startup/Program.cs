@@ -10,6 +10,7 @@ using Infrastructure.Websocket;
 using Infrastructure.Postgres;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -23,12 +24,23 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowedOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "FirebaseHere")  // Default Vite dev server port
+        policy.WithOrigins(
+                "http://localhost:5173",          // Local development
+                "https://drawit-459009.web.app",  // Firebase primary URL
+                "https://drawit-459009.firebaseapp.com")  // Firebase secondary URL
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();  // Important for cookies/auth
     });
 });
+
+string connectionString = builder.Configuration["AppOptions:POSTGRES_CONNECTION_STRING"] ?? "";
+string secretPath = "/app/secrets/postgres-connection-string";
+if (File.Exists(secretPath))
+{
+    connectionString = File.ReadAllText(secretPath).Trim();
+    builder.Configuration["AppOptions:POSTGRES_CONNECTION_STRING"] = connectionString;
+}
 
 // Register AppOptions
 var appOptions = builder.Services.AddAppOptions(builder.Configuration);
