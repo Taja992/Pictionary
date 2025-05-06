@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.8.4",
     "daisyui": "^5.0.19",
+    "firebase": "^11.6.1",
     "jotai": "^2.12.2",
     "konva": "^9.3.20",
     "perfect-freehand": "^1.2.2",
