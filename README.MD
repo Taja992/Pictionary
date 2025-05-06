@@ -38,6 +38,12 @@ flowchart TD
         DrawingService --> GameOrchestrationService
         GuessValidationService --> GameOrchestrationService
         GuessValidationService --> ScoreService
+        
+        %% Services use NotificationService
+        GameOrchestrationService --> NotificationService[NotificationService]
+        RoomService --> NotificationService
+        DrawingService --> NotificationService
+        GuessValidationService --> NotificationService
     end
     
     %% Domain Layer
@@ -62,7 +68,8 @@ flowchart TD
         Word --> WordRepo[WordRepository]
         
         %% WebSocket Connection Management
-        WebSocketAPI <--> ConnManager[WebSocket ConnectionManager]
+        NotificationService --> ConnManager[WebSocket ConnectionManager]
+        WebSocketAPI <--> ConnManager
         
         %% Group repositories
         GameRepo --> DbContext[Postgres DbContext]

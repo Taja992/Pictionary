@@ -115,6 +115,11 @@ using (var scope = app.Services.CreateScope())
 // Use CORS with the Allowed Origins
 app.UseCors("AllowedOrigins");
 
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(30) // More frequent keep-alive
+});
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -130,15 +135,8 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-// app.UseStaticFiles();
 
-// Configure WebSockets
-// app.UseWebSockets(new WebSocketOptions
-// {
-//     KeepAliveInterval = TimeSpan.FromMinutes(2)
-// });
-app.UseWebSockets(); 
+app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
