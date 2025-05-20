@@ -34,10 +34,6 @@ public static class Extensions
 {
     public static IApplicationBuilder UseWebSocketApi(this IApplicationBuilder app)
     {
-        app.UseWebSockets(new WebSocketOptions
-        {
-            KeepAliveInterval = TimeSpan.FromMinutes(2)
-        });
         
         // Register WebSocket endpoint
         app.Use(async (context, next) =>
