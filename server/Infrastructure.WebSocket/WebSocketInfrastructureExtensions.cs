@@ -5,13 +5,12 @@ using Infrastructure.Websocket.Services;
 
 namespace Infrastructure.Websocket;
 
-public static class Extensions
+public static class WebSocketInfrastructureExtensions
 {
-    public static IServiceCollection AddWebSocketInfrastructure(this IServiceCollection services)
+    public static void AddWebSocketInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IConnectionManager, ConnectionManager>();
         services.AddScoped<IWebSocketHandler, WebSocketHandler>();
         services.AddScoped<INotificationService, NotificationService>();
-        return services;
     }
 }

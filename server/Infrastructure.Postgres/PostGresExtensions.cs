@@ -8,7 +8,7 @@ namespace Infrastructure.Postgres;
 
 public static class PostgresExtensions
 {
-    public static IServiceCollection AddPostgresInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static void AddPostgresInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetSection("AppOptions")["POSTGRES_CONNECTION_STRING"];
         
@@ -20,7 +20,5 @@ public static class PostgresExtensions
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IGameRepository, GameRepository>();
         services.AddScoped<IScoreRepository, ScoreRepository>();
-        
-        return services;
     }
 }

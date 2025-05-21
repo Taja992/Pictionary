@@ -56,10 +56,7 @@ nunit-*.xml
 Migrations/
 
 # Sensitive configuration files
-appsettings.Development.json
 appsettings.Production.json
-appsettings.*.json
-!/appsettings.json
 *.pfx
 *.key
 *.pem

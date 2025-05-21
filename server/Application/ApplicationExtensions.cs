@@ -6,7 +6,7 @@ namespace Application;
 
 public static class ApplicationExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static void AddApplicationServices(this IServiceCollection services)
     {
         // Register REST API services
         services.AddScoped<IGameOrchestrationService, GameOrchestrationService>();
@@ -16,8 +16,6 @@ public static class ApplicationExtensions
         services.AddScoped<IWordService, WordService>();
         services.AddScoped<IScoreService, ScoreService>();
 
-
         
-        return services;
     }
 }

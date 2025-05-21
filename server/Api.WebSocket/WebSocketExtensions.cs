@@ -30,9 +30,9 @@ namespace Api.WebSocket;
 /// 6. Simplified Development: Reduces cognitive load by keeping related code together and
 ///    following the established patterns of the rest of the application.
 /// </summary>
-public static class Extensions
+public static class WebSocketExtensions
 {
-    public static IApplicationBuilder UseWebSocketApi(this IApplicationBuilder app)
+    public static void UseWebSocketApi(this IApplicationBuilder app)
     {
         
         // Register WebSocket endpoint
@@ -55,18 +55,13 @@ public static class Extensions
                 await next();
             }
         });
-        
-        return app;
     }
     
-    public static IServiceCollection AddWebSocketApi(this IServiceCollection services)
+    public static void AddWebSocketApi(this IServiceCollection services)
     {
         services.AddScoped<IDrawEventHandler, DrawEventHandler>();
         services.AddScoped<IChatEventHandler, ChatEventHandler>();
         services.AddScoped<IRoomEventHandler, RoomEventHandler>(); 
-
-        // Add other event handlers
         
-        return services;
     }
 }

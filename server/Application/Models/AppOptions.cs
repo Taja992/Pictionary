@@ -1,12 +1,12 @@
 namespace Application.Models
 {
-    public class JwtSettings
-    {
-        public string SecretKey { get; set; } = "some_random_jwt_key_wowmuchsecure";
-        public string Issuer { get; set; } = "pictionary-api";
-        public string Audience { get; set; } = "pictionary-client";
-        public int ExpiryMinutes { get; set; } = 60 * 24 * 7; // 7 days in minutes
-    }
+    // public class JwtSettings
+    // {
+    //     public string SecretKey { get; set; } = "some_random_jwt_key_wowmuchsecure";
+    //     public string Issuer { get; set; } = "pictionary-api";
+    //     public string Audience { get; set; } = "pictionary-client";
+    //     public int ExpiryMinutes { get; set; } = 60 * 24 * 7; // 7 days in minutes
+    // }
     
     public class AppOptions
     {
@@ -14,7 +14,7 @@ namespace Application.Models
         public int REST_PORT { get; set; } = 5000;
         public int WS_PORT { get; set; } = 5001;
         
-        public JwtSettings JwtSettings { get; set; } = new JwtSettings();
+        // public JwtSettings JwtSettings { get; set; } = new JwtSettings();
         
         public string POSTGRES_CONNECTION_STRING { get; set; } = "Host=localhost;Database=pictionary;Username=postgres;Password=postgres";
         

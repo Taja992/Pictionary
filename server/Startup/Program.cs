@@ -2,9 +2,6 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using Application;
 using Api.Rest;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Api.WebSocket;
 using Infrastructure.Websocket;
 using Infrastructure.Postgres;
@@ -53,16 +50,16 @@ builder.Services.AddOpenApiDocument(config =>
     config.Version = "v1";
     config.Description = "REST API for the Pictionary game";
     
-    // Add JWT security definition
-    config.AddSecurity("JWT", new OpenApiSecurityScheme
-    {
-        Type = OpenApiSecuritySchemeType.ApiKey,
-        Name = "Authorization",
-        In = OpenApiSecurityApiKeyLocation.Header,
-        Description = "Enter 'Bearer {your_token}' in the text box below."
-    });
+    //
+    // config.AddSecurity("JWT", new OpenApiSecurityScheme
+    // {
+    //     Type = OpenApiSecuritySchemeType.ApiKey,
+    //     Name = "Authorization",
+    //     In = OpenApiSecurityApiKeyLocation.Header,
+    //     Description = "Enter 'Bearer {your_token}' in the text box below."
+    // });
     
-    config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+   // config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
 });
 
 // Add services from your other projects
@@ -74,26 +71,26 @@ builder.Services.AddWebSocketApi();
 
 
 
-// Configure JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = appOptions.JwtSettings.Issuer,
-        ValidAudience = appOptions.JwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(appOptions.JwtSettings.SecretKey))
-    };
-});
+// // Configure JWT Authentication
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+// })
+// .AddJwtBearer(options =>
+// {
+//     options.TokenValidationParameters = new TokenValidationParameters
+//     {
+//         ValidateIssuer = true,
+//         ValidateAudience = true,
+//         ValidateLifetime = true,
+//         ValidateIssuerSigningKey = true,
+//         ValidIssuer = appOptions.JwtSettings.Issuer,
+//         ValidAudience = appOptions.JwtSettings.Audience,
+//         IssuerSigningKey = new SymmetricSecurityKey(
+//             Encoding.UTF8.GetBytes(appOptions.JwtSettings.SecretKey))
+//     };
+// });
 
 var app = builder.Build();
 
@@ -138,8 +135,8 @@ else
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 app.UseRestApi();
 app.UseWebSocketApi();
 

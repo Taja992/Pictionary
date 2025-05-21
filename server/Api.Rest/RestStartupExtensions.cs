@@ -7,7 +7,7 @@ namespace Api.Rest
 {
     public static class RestStartupExtensions
     {
-        public static IServiceCollection AddRestApi(this IServiceCollection services)
+        public static void AddRestApi(this IServiceCollection services)
         {
             services.AddEndpointsApiExplorer();
             
@@ -16,23 +16,15 @@ namespace Api.Rest
             services.AddProblemDetails();
 
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
-                        
-
-
-            
 
             var controllersAssembly = typeof(RestStartupExtensions).Assembly;
             services.AddControllers().AddApplicationPart(controllersAssembly);
-            
-            return services;
         }
 
-        public static WebApplication UseRestApi(this WebApplication app)
+        public static void UseRestApi(this WebApplication app)
         {
             app.UseExceptionHandler();
             app.MapControllers();
-            
-            return app;
         }
     }
 }
