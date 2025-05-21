@@ -6,8 +6,3 @@ public class CreateGameRequest
     public int Rounds { get; set; } = 3;
     public int TimePerRound { get; set; } = 60;
 }
-
-public class AssignDrawerRequest
-{
-    public string UserId { get; set; } = null!;
-}

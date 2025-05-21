@@ -1,5 +1,6 @@
 using Api.Rest.DTOs.User;
 using Application.Interfaces.Services;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -11,11 +12,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly ILogger<UserController> _logger;
+    private readonly IMapper _mapper;
     
-    public UserController(IUserService userService, ILogger<UserController> logger)
+    public UserController(IUserService userService, ILogger<UserController> logger, IMapper mapper)
     {
         _userService = userService;
         _logger = logger;
+        _mapper = mapper;
     }
     
     [HttpPost("register-temp")]
@@ -30,13 +33,7 @@ public class UserController : ControllerBase
         {
             var user = await _userService.GetOrCreateTemporaryUserAsync(request.Username);
             
-            var userDto = new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                TotalGamesPlayed = user.TotalGamesPlayed,
-                TotalGamesWon = user.TotalGamesWon
-            };
+            var userDto = _mapper.Map<UserDto>(user);
             
             return Ok(userDto);
         }
@@ -56,13 +53,7 @@ public class UserController : ControllerBase
             return NotFound();
         }
         
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            TotalGamesPlayed = user.TotalGamesPlayed,
-            TotalGamesWon = user.TotalGamesWon
-        };
+        var userDto = _mapper.Map<UserDto>(user);
         
         return Ok(userDto);
     }

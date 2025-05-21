@@ -136,29 +136,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         
         return currentGame;
     }
-
-    // private async Task UpdatePlayerStatsAsync(string gameId)
-    // {
-    //     var scores = await _scoreRepository.GetByGameIdAsync(gameId);
-        
-    //     foreach (var score in scores)
-    //     {
-    //         var user = await _userRepository.GetByIdAsync(score.UserId);
-    //         if (user != null)
-    //         {
-    //             user.TotalGamesPlayed++;
-                
-    //             // Find the highest score
-    //             var highestScore = scores.OrderByDescending(s => s.Points).First();
-    //             if (score.UserId == highestScore.UserId)
-    //             {
-    //                 user.TotalGamesWon++;
-    //             }
-                
-    //             await _userRepository.UpdateAsync(user);
-    //         }
-    //     }
-    // }
+    
 
     public async Task<bool> AddPlayerToGameAsync(string gameId, string userId)
     {
@@ -321,6 +299,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
     }
 
+    // category is always null because not implemented yet
     private async Task SelectWordForRoundWithScopeAsync(string gameId, string? category, IGameRepository gameRepository, IWordService wordService)
     {
 
@@ -401,7 +380,7 @@ public class GameOrchestrationService : IGameOrchestrationService
     private async Task EndRoundWithScopeAsync(string gameId, IServiceScope scope)
     {
         var services = new ScopedServices(scope);
-        
+
         var game = await services.GameRepository.GetByIdAsync(gameId);
         if (game == null)
         {
@@ -410,22 +389,29 @@ public class GameOrchestrationService : IGameOrchestrationService
 
         // Set game state to round end
         game.Status = GameStatus.RoundEnd;
-        
+
         // Clear current word and drawer
         game.CurrentWord = null;
         game.CurrentDrawerId = null;
 
         await services.GameRepository.UpdateAsync(game);
-        
+
         // Send notification
         await services.NotificationService.NotifyRoundEnded(game.RoomId, game);
-        
+
         _logger.LogInformation("Ended round {Round} in game {GameId}", game.CurrentRound, gameId);
 
         // If this was the last round, end the game
         if (game.CurrentRound >= game.TotalRounds)
         {
             // Start next round after delay
+            // _ = StartNextRoundAfterDelayWithScopeAsync(gameId);
+            _logger.LogInformation("Last round completed for game {GameId}. Game should end.", gameId);
+            await EndGameWithScopeAsync(gameId, scope);
+        }
+        else
+        {
+            _logger.LogInformation("Starting next round for game {GameId}", gameId);
             _ = StartNextRoundAfterDelayWithScopeAsync(gameId);
         }
     }
@@ -457,77 +443,75 @@ public class GameOrchestrationService : IGameOrchestrationService
         }
     }
 
-    // private async Task<Game> EndGameWithScopeAsync(string gameId, IServiceScope scope)
-    // {
-    //     var services = new ScopedServices(scope);
-    //     
-    //     var game = await services.GameRepository.GetByIdAsync(gameId);
-    //     if (game == null)
-    //     {
-    //         throw new Exception($"Game with ID {gameId} not found");
-    //     }
-    //
-    //     // Cancel any active timers for this game
-    //     if (GameTimers.TryGetValue(gameId, out var cts))
-    //     {
-    //         await cts.CancelAsync();
-    //         GameTimers.Remove(gameId);
-    //     }
-    //
-    //     // Set game state to finished
-    //     game.Status = GameStatus.GameEnd;
-    //     game.EndTime = DateTime.UtcNow;
-    //
-    //     // Update room status
-    //     var room = await services.RoomRepository.GetByIdAsync(game.RoomId);
-    //     if (room != null)
-    //     {
-    //         room.Status = RoomStatus.Waiting;
-    //         await services.RoomRepository.UpdateAsync(room);
-    //     }
-    //
-    //     await services.GameRepository.UpdateAsync(game);
-    //     await services.NotificationService.NotifyGameEnded(game.RoomId, game);
-    //     
-    //     _logger.LogInformation("Ended game {GameId}", gameId);
-    //
-    //     // Update player statistics in a new task (to avoid blocking)
-    //     _ = Task.Run(async () =>
-    //     {
-    //         try 
-    //         {
-    //             // Create a new scope for this background task
-    //             using var statsScope = _serviceScopeFactory.CreateScope();
-    //             var statsUserRepo = statsScope.ServiceProvider.GetRequiredService<IUserRepository>();
-    //             var statsScoreRepo = statsScope.ServiceProvider.GetRequiredService<IScoreRepository>();
-    //             
-    //             var scores = await statsScoreRepo.GetByGameIdAsync(gameId);
-    //             
-    //             foreach (var score in scores)
-    //             {
-    //                 var user = await statsUserRepo.GetByIdAsync(score.UserId);
-    //                 if (user != null)
-    //                 {
-    //                     user.TotalGamesPlayed++;
-    //                     
-    //                     // Find the highest score
-    //                     var highestScore = scores.OrderByDescending(s => s.Points).First();
-    //                     if (score.UserId == highestScore.UserId)
-    //                     {
-    //                         user.TotalGamesWon++;
-    //                     }
-    //                     
-    //                     await statsUserRepo.UpdateAsync(user);
-    //                 }
-    //             }
-    //         }
-    //         catch (Exception ex)
-    //         {
-    //             _logger.LogError(ex, "Error updating player stats for game {GameId}", gameId);
-    //         }
-    //     });
-    //
-    //     return game;
-    // }
+    private async Task EndGameWithScopeAsync(string gameId, IServiceScope scope)
+    {
+        var services = new ScopedServices(scope);
+        
+        var game = await services.GameRepository.GetByIdAsync(gameId);
+        if (game == null)
+        {
+            throw new Exception($"Game with ID {gameId} not found");
+        }
+    
+        // Cancel any active timers for this game
+        if (GameTimers.TryGetValue(gameId, out var cts))
+        {
+            await cts.CancelAsync();
+            GameTimers.Remove(gameId);
+        }
+    
+        // Set game state to finished
+        game.Status = GameStatus.GameEnd;
+        game.EndTime = DateTime.UtcNow;
+    
+        // Update room status
+        var room = await services.RoomRepository.GetByIdAsync(game.RoomId);
+        if (room != null)
+        {
+            room.Status = RoomStatus.Waiting;
+            await services.RoomRepository.UpdateAsync(room);
+        }
+    
+        await services.GameRepository.UpdateAsync(game);
+        await services.NotificationService.NotifyGameEnded(game.RoomId, game);
+        
+        _logger.LogInformation("Ended game {GameId}", gameId);
+    
+        // Update player statistics in a new task (to avoid blocking)
+        _ = Task.Run(async () =>
+        {
+            try 
+            {
+                // Create a new scope for this background task
+                using var statsScope = _serviceScopeFactory.CreateScope();
+                var statsUserRepo = statsScope.ServiceProvider.GetRequiredService<IUserRepository>();
+                var statsScoreRepo = statsScope.ServiceProvider.GetRequiredService<IScoreRepository>();
+                
+                var scores = await statsScoreRepo.GetByGameIdAsync(gameId);
+                
+                foreach (var score in scores)
+                {
+                    var user = await statsUserRepo.GetByIdAsync(score.UserId);
+                    if (user != null)
+                    {
+                        user.TotalGamesPlayed++;
+                        
+                        // Find the highest score
+                        var highestScore = scores.OrderByDescending(s => s.Points).First();
+                        if (score.UserId == highestScore.UserId)
+                        {
+                            user.TotalGamesWon++;
+                        }
+                        
+                        await statsUserRepo.UpdateAsync(user);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating player stats for game {GameId}", gameId);
+            }
+        });
+    }
     
 }

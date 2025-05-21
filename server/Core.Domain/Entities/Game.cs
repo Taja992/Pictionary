@@ -27,5 +27,4 @@ public enum GameStatus
     Drawing,
     RoundEnd,
     GameEnd
-
 }

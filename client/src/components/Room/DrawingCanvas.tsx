@@ -116,7 +116,8 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   // Drawing functions
   const handleMouseDown = (e: any) => {
     if (!isDrawer) return;
-    
+    const isValidDrawer = currentGame?.currentDrawerId === user.id && isDrawer;
+    if (!isValidDrawer) return;
     const pos = e.target.getStage().getPointerPosition();
     setIsDrawing(true);
     setCurrentLine([pos.x, pos.y]);

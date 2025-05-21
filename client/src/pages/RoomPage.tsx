@@ -6,7 +6,8 @@ import {
   currentGameAtom, 
   currentRoomAtom,
   roomPlayersAtom,
-  gamePlayersAtom
+  gamePlayersAtom,
+  isDrawerAtom
 } from '../atoms';
 import { api, RoomWebSocketHandler } from '../api';
 // import { GameHeader } from '../components/Room';
@@ -35,6 +36,7 @@ export default function RoomPage() {
   const [user] = useAtom(userAtom);
   const [, setRoomPlayers] = useAtom(roomPlayersAtom);
   const [, setGamePlayers] = useAtom(gamePlayersAtom);
+  const [, setIsDrawer] = useAtom(isDrawerAtom);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function RoomPage() {
     
     // Clean up when unmounting
     return () => {
+      setIsDrawer(false);
       setCurrentRoom(null);
       setCurrentGame(null);
       setRoomPlayers([]);

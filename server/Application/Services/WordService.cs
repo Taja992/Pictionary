@@ -8,15 +8,16 @@ public class WordService : IWordService
     {
 
         "apple", "banana", "car", "dog", "elephant", "flower", "guitar",
-        "house", "island", "jungle", "kangaroo", "lion", "mountain",
-        // ... add more words
-    };
+        "house", "island", "jungle", "kangaroo", "lion", "mountain"
 
+    };
+    
+    // category always null because not implemented
     private readonly Dictionary<string, List<string>> _categorizedWords = new Dictionary<string, List<string>>
     {
         ["animals"] = new List<string> { "cat", "dog", "elephant", "lion", "tiger", "zebra" },
-        ["food"] = new List<string> { "apple", "banana", "cake", "donut", "egg", "fish" },
-        // ... add more categories
+        ["food"] = new List<string> { "apple", "banana", "cake", "donut", "egg", "fish" }
+
     };
 
     public string GetRandomWord()
