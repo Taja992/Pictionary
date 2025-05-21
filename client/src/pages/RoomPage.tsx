@@ -86,6 +86,12 @@ export default function RoomPage() {
               
               setGamePlayers(gamePlayers);
             }
+
+            if (gameResponse.data.currentDrawerId && user.id === gameResponse.data.currentDrawerId) {
+              setIsDrawer(true);
+            } else {
+              setIsDrawer(false);
+            }
           }
         }
       } catch (err) {
