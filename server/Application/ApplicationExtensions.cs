@@ -11,7 +11,6 @@ public static class ApplicationExtensions
         // Register REST API services
         services.AddScoped<IGameOrchestrationService, GameOrchestrationService>();
         services.AddScoped<IRoomService, RoomService>();
-        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddHostedService<TempUserCleanupService>();
         services.AddScoped<IWordService, WordService>();

@@ -10,11 +10,6 @@ public class ScoreRepository : BaseRepository<Score>, IScoreRepository
     {
     }
 
-    public override async Task<Score?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
-    {
-        return await base.GetByIdAsync(id, cancellationToken);
-    }
-
     public async Task<IEnumerable<Score>> GetByGameIdAsync(string gameId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
@@ -43,11 +38,6 @@ public class ScoreRepository : BaseRepository<Score>, IScoreRepository
     public override async Task UpdateAsync(Score score, CancellationToken cancellationToken = default)
     {
         await base.UpdateAsync(score, cancellationToken);
-    }
-
-    public override async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
-    {
-        await base.DeleteAsync(id, cancellationToken);
     }
 
     public async Task<Score?> GetScoreForRoundAsync(string gameId, string userId, int roundNumber, CancellationToken cancellationToken = default)

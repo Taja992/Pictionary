@@ -50,9 +50,5 @@ public class GameRepository : BaseRepository<Game>, IGameRepository
             await UpdateAsync(game, cancellationToken);
         }
     }
-
-    public override async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
-    {
-        await base.DeleteAsync(id, cancellationToken);
-    }
+    
 }

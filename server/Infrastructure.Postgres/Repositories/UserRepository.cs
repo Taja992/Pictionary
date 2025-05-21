@@ -10,11 +10,6 @@ public class UserRepository : BaseRepository<User>, IUserRepository
     {
     }
 
-    public override async Task<User?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
-    {
-        return await base.GetByIdAsync(id, cancellationToken);
-    }
-
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
         return await _dbSet
@@ -27,11 +22,6 @@ public class UserRepository : BaseRepository<User>, IUserRepository
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken);
     }
 
-    public override async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await base.GetAllAsync(cancellationToken);
-    }
-
     public override async Task<string> CreateAsync(User user, CancellationToken cancellationToken = default)
     {
         return await base.CreateAsync(user, cancellationToken);
@@ -41,9 +31,5 @@ public class UserRepository : BaseRepository<User>, IUserRepository
     {
         await base.UpdateAsync(user, cancellationToken);
     }
-
-    public override async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
-    {
-        await base.DeleteAsync(id, cancellationToken);
-    }
+    
 }

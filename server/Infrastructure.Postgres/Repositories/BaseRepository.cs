@@ -4,7 +4,7 @@ namespace Infrastructure.Postgres.Repositories;
 
 // Create a base repository class that implements common CRUD operations
 // This is just to prevent duplication of code across repositories
-// extending : class enforces class type constraint
+// extending : class enforces class type constraint(must use objects like Game,User, Score etc cannot use int, string etc)
 public abstract class BaseRepository<TEntity> where TEntity : class
 {
     protected readonly PictionaryDbContext _context;
@@ -33,7 +33,7 @@ public abstract class BaseRepository<TEntity> where TEntity : class
         await _context.SaveChangesAsync(cancellationToken);
         
         // This assumes the entity has an Id property
-        return (entity.GetType().GetProperty("Id")?.GetValue(entity) as string) ?? string.Empty;
+        return entity.GetType().GetProperty("Id")?.GetValue(entity) as string ?? string.Empty;
     }
 
     public virtual async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)

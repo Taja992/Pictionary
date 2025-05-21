@@ -72,9 +72,4 @@ public class RoomRepository : BaseRepository<Room>, IRoomRepository
             await _context.SaveChangesAsync(cancellationToken);
         }
     }
-
-    public override async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
-    {
-        await base.DeleteAsync(id, cancellationToken);
-    }
 }
