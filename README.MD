@@ -38,91 +38,302 @@ using (var scope = app.Services.CreateScope())
 
 # Pictionary Game Architecture
 
+The Pictionary game is built with a clean, layered architecture. Below are diagrams showing the overall architecture and key subsystems.
+
+## Server Architecture Overview
 
 ```mermaid
 flowchart TD
-    Client([Client]) --> RESTRoute[REST API Request]
+    Client([Client Browser]) --> RESTRoute[REST API Request]
     Client --> WSRoute[WebSocket API Request]
     
-    %% REST API Flow
-    subgraph "REST API Layer"
-        RESTRoute --> RestAPI[Api.Rest]
-        RestAPI --> AuthController[AuthController]
-        RestAPI --> GameController[GameController]
-        RestAPI --> UserController[UserController]
-        RestAPI --> LeaderboardController[LeaderboardController]
+    %% Project Structure by Assembly
+    subgraph "Api.Rest"
+        RESTRoute --> RestControllers[Controllers]
+        RestControllers --> GameOrchestriationController[GameOrchestriationController]
+        RestControllers --> RoomController[RoomController]
+        RestControllers --> UserController[UserController]
     end
     
-    %% WebSocket API Flow
-    subgraph "WebSocket API Layer"
-        WSRoute --> WebSocketHandler[WebSocketHandler]
-        WebSocketHandler --> MessageRouter[MessageRouter]
-        MessageRouter --> DrawEventHandler[DrawEventHandler]
-        MessageRouter --> ChatEventHandler[ChatEventHandler]
-        MessageRouter --> RoomEventHandler[RoomEventHandler]
+    subgraph "Api.WebSocket"
+        WSRoute --> WebSocketEndpoint["/ws Endpoint"]
+        WebSocketEndpoint --> EventHandlers[Event Handlers]
+        EventHandlers --> DrawEventHandler[DrawEventHandler]
+        EventHandlers --> ChatEventHandler[ChatEventHandler]
+        EventHandlers --> RoomEventHandler[RoomEventHandler]
     end
     
-    %% Application Layer
-    subgraph "Application Layer"
-        AuthController --> AuthService[AuthService]
-        GameController --> GameOrchestrationService[GameOrchestrationService]
-        UserController --> UserService[UserService]
-        LeaderboardController --> ScoreService[ScoreService]
-        
-        DrawEventHandler --> DrawingService[DrawingService]
-        ChatEventHandler --> GuessValidationService[GuessValidationService]
-        RoomEventHandler --> RoomService[RoomService]
-        
-        DrawingService --> GameOrchestrationService
-        GuessValidationService --> GameOrchestrationService
-        GuessValidationService --> ScoreService
-        
-        %% Services use NotificationService & MessageService
-        GameOrchestrationService --> NotificationService[NotificationService]
-        RoomService --> NotificationService
-        DrawingService --> NotificationService
-        GuessValidationService --> NotificationService
-        NotificationService --> MessageService[MessageService]
-        DrawEventHandler --> MessageService
-        ChatEventHandler --> MessageService
-        RoomEventHandler --> MessageService
+    subgraph "Application"
+        ApplicationServices[Application Services]
+        ApplicationServices --> GameOrchestrationService[GameOrchestrationService]
+        ApplicationServices --> RoomService[RoomService]
+        ApplicationServices --> UserService[UserService]
+        ApplicationServices --> ScoreService[ScoreService]
+        ApplicationServices --> WordService[WordService]
+    end
+
+    subgraph "Core.Domain"
+        Entities[Domain Entities]
+        Entities --> Game[Game]
+        Entities --> Room[Room]
+        Entities --> User[User]
+        Entities --> Score[Score]
     end
     
-    %% Domain Layer
-    subgraph "Core Domain Layer"
-        GameOrchestrationService --> Game[Game Entity]
-        RoomService --> Room[Room Entity]
-        UserService --> User[User Entity]
-        AuthService --> User
-        ScoreService --> Score[Score Entity]
-        DrawingService --> Drawing[Drawing Entity]
-        GuessValidationService --> Word[Word Entity]
+    subgraph "Infrastructure.Postgres"
+        RepositoriesImpl[Repository Implementations]
+        RepositoriesImpl --> GameRepository[GameRepository]
+        RepositoriesImpl --> RoomRepository[RoomRepository]
+        RepositoriesImpl --> UserRepository[UserRepository]
+        RepositoriesImpl --> ScoreRepository[ScoreRepository]
+        
+        DbContext[PictionaryDbContext]
     end
     
-    %% Infrastructure Layer
-    subgraph "Infrastructure Layer"
-        %% Database Access
-        Game --> GameRepo[GameRepository]
-        Room --> RoomRepo[RoomRepository]
-        User --> UserRepo[UserRepository]
-        Score --> ScoreRepo[ScoreRepository]
-        Drawing --> DrawingRepo[DrawingRepository]
-        Word --> WordRepo[WordRepository]
-        
-        %% WebSocket Connection Management
-        WebSocketHandler <--> ConnectionManager[ConnectionManager]
-        MessageService --> ConnectionManager
-        
-        %% Group repositories
-        GameRepo --> DbContext[Postgres DbContext]
-        RoomRepo --> DbContext
-        UserRepo --> DbContext
-        ScoreRepo --> DbContext
-        DrawingRepo --> DbContext
-        WordRepo --> DbContext
+    subgraph "Infrastructure.WebSocket"
+        WSInfrastructure[WebSocket Infrastructure]
+        WSInfrastructure --> WebSocketHandler[WebSocketHandler]
+        WSInfrastructure --> ConnectionManager[ConnectionManager]
+        WSInfrastructure --> MessageRouter[MessageRouter]
+        WSInfrastructure --> MessageService[MessageService]
+        WSInfrastructure --> NotificationService[NotificationService]
     end
     
-    %% Real-time Communication Flow
-    ConnectionManager -.-> ClientTracking[Tracks Client Connections]
-    MessageService -.-> MessageBroadcasting[Broadcasts Messages]
-    MessageBroadcasting --> Client
+    %% Service Dependencies
+    GameOrchestriationController --> GameOrchestrationService
+    RoomController --> RoomService
+    UserController --> UserService
+    
+    DrawEventHandler --> MessageService
+    ChatEventHandler --> GameOrchestrationService
+    ChatEventHandler --> ScoreService
+    ChatEventHandler --> MessageService
+    RoomEventHandler --> RoomService
+    RoomEventHandler --> MessageService
+    
+    GameOrchestrationService --> NotificationService
+    RoomService --> NotificationService
+    
+    %% Infrastructure Dependencies
+    WebSocketEndpoint --> WebSocketHandler
+    WebSocketHandler --> MessageRouter
+    MessageRouter --> EventHandlers
+    
+    NotificationService --> MessageService
+    MessageService --> ConnectionManager
+    
+    %% Repository Dependencies
+    GameOrchestrationService --> GameRepository
+    GameOrchestrationService --> RoomRepository
+    GameOrchestrationService --> UserRepository
+    GameOrchestrationService --> ScoreRepository
+    RoomService --> RoomRepository
+    RoomService --> UserRepository
+    UserService --> UserRepository
+    ScoreService --> ScoreRepository
+    
+    %% Data Access
+    RepositoriesImpl --> DbContext
+```
+
+## WebSocket Communication Flow
+
+This diagram shows how real-time messages flow through the system:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant WebSocketHandler
+    participant ConnectionManager
+    participant MessageRouter
+    participant EventHandlers
+    participant ApplicationServices
+    participant MessageService
+    participant NotificationService
+    
+    %% Establishing connection
+    Client->>WebSocketHandler: Connection Request
+    WebSocketHandler->>ConnectionManager: OnOpen(socket, clientId, userId, username)
+    ConnectionManager->>ConnectionManager: Track connection
+    ConnectionManager-->>WebSocketHandler: Connection established
+    
+    %% Client message flow
+    Client->>WebSocketHandler: Send message
+    WebSocketHandler->>MessageRouter: RouteMessage(socket, clientId, message)
+    MessageRouter->>MessageRouter: Parse message type
+    MessageRouter->>EventHandlers: Call appropriate handler
+    EventHandlers->>ApplicationServices: Execute domain logic
+    ApplicationServices-->>EventHandlers: Result
+    EventHandlers->>MessageService: Send response
+    MessageService->>ConnectionManager: Get client connection
+    MessageService->>Client: Send response to client
+    
+    %% Game event notifications
+    ApplicationServices->>NotificationService: Notify of game event
+    NotificationService->>MessageService: BroadcastToRoom
+    MessageService->>ConnectionManager: Get clients in room
+    MessageService->>Client: Send notification to clients
+```
+
+## Repository Pattern Implementation
+
+This diagram shows how the repository pattern is implemented:
+
+```mermaid
+classDiagram
+    class BaseRepository~T~ {
+        #DbContext _context
+        #DbSet~T~ _dbSet
+        +GetByIdAsync(id) Task~T?~
+        +GetAllAsync() Task~IEnumerable~T~~
+        +CreateAsync(entity) Task~string~
+        +UpdateAsync(entity) Task
+        +DeleteAsync(id) Task
+    }
+    
+    class IGameRepository {
+        <<interface>>
+        +GetByIdAsync(id) Task~Game?~
+        +GetCurrentGameForRoomAsync(roomId) Task~Game?~
+        +CreateAsync(game) Task~string~
+        +UpdateAsync(game) Task
+        +EndGameAsync(gameId, endTime) Task
+        +DeleteAsync(id) Task
+    }
+    
+    class GameRepository {
+        +GetByIdAsync(id) Task~Game?~
+        +GetCurrentGameForRoomAsync(roomId) Task~Game?~
+        +CreateAsync(game) Task~string~
+        +UpdateAsync(game) Task
+        +EndGameAsync(gameId, endTime) Task
+    }
+    
+    class IRoomRepository {
+        <<interface>>
+        +GetByIdAsync(id) Task~Room?~
+        +GetAvailableRoomsAsync() Task~IEnumerable~Room~~
+        +GetRoomsByUserIdAsync(userId) Task~IEnumerable~Room~~
+        +CreateAsync(room) Task~string~
+        +UpdateAsync(room) Task
+        +AddPlayerToRoomAsync(roomId, playerId) Task
+        +RemovePlayerFromRoomAsync(roomId, playerId) Task
+        +DeleteAsync(id) Task
+    }
+    
+    class RoomRepository {
+        +GetByIdAsync(id) Task~Room?~
+        +GetAvailableRoomsAsync() Task~IEnumerable~Room~~
+        +GetRoomsByUserIdAsync(userId) Task~IEnumerable~Room~~
+        +CreateAsync(room) Task~string~
+        +UpdateAsync(room) Task
+        +AddPlayerToRoomAsync(roomId, playerId) Task
+        +RemovePlayerFromRoomAsync(roomId, playerId) Task
+    }
+    
+    class PictionaryDbContext {
+        +DbSet~User~ Users
+        +DbSet~Room~ Rooms
+        +DbSet~Game~ Games
+        +DbSet~Score~ Scores
+    }
+    
+    BaseRepository <|-- GameRepository
+    BaseRepository <|-- RoomRepository
+    BaseRepository <|-- UserRepository
+    BaseRepository <|-- ScoreRepository
+    
+    IGameRepository <|.. GameRepository
+    IRoomRepository <|.. RoomRepository
+    
+    GameRepository --> PictionaryDbContext
+    RoomRepository --> PictionaryDbContext
+    UserRepository --> PictionaryDbContext
+    ScoreRepository --> PictionaryDbContext
+```
+
+## Real-Time Communication Components
+
+This diagram focuses on the WebSocket infrastructure:
+
+```mermaid
+classDiagram
+    class IConnectionManager {
+        <<interface>>
+        +OnOpen(socket, clientId, userId, username) Task
+        +OnClose(socket, clientId) Task
+        +GetClientIdsForUser(userId) Task~List~string~~
+        +AddToRoom(room, clientId) Task
+        +RemoveFromRoom(room, clientId) Task
+        +GetClientsFromRoomId(room) Task~List~string~~
+        +GetRoomsFromClientId(clientId) Task~List~string~~
+        +GetSocketFromClientId(clientId) object?
+        +GetUserIdFromClientId(clientId) Task~string~
+    }
+    
+    class ConnectionManager {
+        -ConcurrentDictionary clientIdToSocket
+        -ConcurrentDictionary socketToClientId
+        -ConcurrentDictionary roomsToClientId
+        -ConcurrentDictionary clientIdToRooms
+        -ConcurrentDictionary clientIdToUserId
+        -ConcurrentDictionary clientIdToUsername
+        -ConcurrentDictionary userIdToClientIds
+        +OnOpen(socket, clientId, userId, username) Task
+        +OnClose(socket, clientId) Task
+        +AddToRoom(room, clientId) Task
+        +RemoveFromRoom(room, clientId) Task
+        +GetClientsFromRoomId(room) Task~List~string~~
+        +GetRoomsFromClientId(clientId) Task~List~string~~
+        +GetClientIdsForUser(userId) Task~List~string~~
+        +GetSocketFromClientId(clientId) object?
+        +GetUserIdFromClientId(clientId) Task~string~
+        -LogCurrentState() Task
+    }
+    
+    class IMessageService {
+        <<interface>>
+        +SendToClient(clientId, message) Task
+        +SendToClient~T~(clientId, message) Task
+        +BroadcastToRoom(room, message) Task
+        +BroadcastToRoom~T~(room, message) Task
+    }
+    
+    class MessageService {
+        +SendToClient(clientId, message) Task
+        +SendToClient~T~(clientId, message) Task
+        +BroadcastToRoom(room, message) Task
+        +BroadcastToRoom~T~(room, message) Task
+    }
+    
+    class IMessageRouter {
+        <<interface>>
+        +RouteMessage(socket, clientId, message) Task
+    }
+    
+    class MessageRouter {
+        +RouteMessage(socket, clientId, message) Task
+    }
+    
+    class IWebSocketHandler {
+        <<interface>>
+        +ProcessWebSocketAsync(context) Task
+    }
+    
+    class WebSocketHandler {
+        -ReceiveMessagesAsync(webSocket, clientId) Task
+        +ProcessWebSocketAsync(context) Task
+    }
+    
+    IConnectionManager <|.. ConnectionManager
+    IMessageService <|.. MessageService
+    IMessageRouter <|.. MessageRouter
+    IWebSocketHandler <|.. WebSocketHandler
+    
+    WebSocketHandler --> IConnectionManager
+    WebSocketHandler --> IMessageRouter
+    MessageService --> IConnectionManager
+    MessageRouter --> IDrawEventHandler
+    MessageRouter --> IChatEventHandler
+    MessageRouter --> IRoomEventHandler
+```
