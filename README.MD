@@ -55,11 +55,11 @@ flowchart TD
     
     %% WebSocket API Flow
     subgraph "WebSocket API Layer"
-        WSRoute --> WebSocketAPI[Api.WebSocket]
-        WebSocketAPI --> DrawEventHandler[DrawEventHandler]
-        WebSocketAPI --> GuessEventHandler[GuessEventHandler]
-        WebSocketAPI --> GameStateHandler[GameStateHandler]
-        WebSocketAPI --> PlayerJoinHandler[PlayerJoinHandler]
+        WSRoute --> WebSocketHandler[WebSocketHandler]
+        WebSocketHandler --> MessageRouter[MessageRouter]
+        MessageRouter --> DrawEventHandler[DrawEventHandler]
+        MessageRouter --> ChatEventHandler[ChatEventHandler]
+        MessageRouter --> RoomEventHandler[RoomEventHandler]
     end
     
     %% Application Layer
@@ -70,19 +70,22 @@ flowchart TD
         LeaderboardController --> ScoreService[ScoreService]
         
         DrawEventHandler --> DrawingService[DrawingService]
-        GuessEventHandler --> GuessValidationService[GuessValidationService]
-        GameStateHandler --> GameOrchestrationService
-        PlayerJoinHandler --> RoomService[RoomService]
+        ChatEventHandler --> GuessValidationService[GuessValidationService]
+        RoomEventHandler --> RoomService[RoomService]
         
         DrawingService --> GameOrchestrationService
         GuessValidationService --> GameOrchestrationService
         GuessValidationService --> ScoreService
         
-        %% Services use NotificationService
+        %% Services use NotificationService & MessageService
         GameOrchestrationService --> NotificationService[NotificationService]
         RoomService --> NotificationService
         DrawingService --> NotificationService
         GuessValidationService --> NotificationService
+        NotificationService --> MessageService[MessageService]
+        DrawEventHandler --> MessageService
+        ChatEventHandler --> MessageService
+        RoomEventHandler --> MessageService
     end
     
     %% Domain Layer
@@ -107,8 +110,8 @@ flowchart TD
         Word --> WordRepo[WordRepository]
         
         %% WebSocket Connection Management
-        NotificationService --> ConnManager[WebSocket ConnectionManager]
-        WebSocketAPI <--> ConnManager
+        WebSocketHandler <--> ConnectionManager[ConnectionManager]
+        MessageService --> ConnectionManager
         
         %% Group repositories
         GameRepo --> DbContext[Postgres DbContext]
@@ -119,6 +122,7 @@ flowchart TD
         WordRepo --> DbContext
     end
     
-    %% Real-time Communication
-    ConnManager --> BroadcastToRoom[Broadcast to Room Players]
-    BroadcastToRoom --> Client
+    %% Real-time Communication Flow
+    ConnectionManager -.-> ClientTracking[Tracks Client Connections]
+    MessageService -.-> MessageBroadcasting[Broadcasts Messages]
+    MessageBroadcasting --> Client

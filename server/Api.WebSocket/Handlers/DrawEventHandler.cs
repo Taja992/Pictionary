@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Application.Interfaces.Services;
 using Application.Interfaces.WebsocketInterfaces;
 using Infrastructure.WebSocket.DTOs.Client;
 using Microsoft.Extensions.Logging;
@@ -10,12 +11,15 @@ public class DrawEventHandler : IDrawEventHandler
 
     private readonly IConnectionManager _connectionManager;
     private readonly ILogger<DrawEventHandler> _logger;
+    private readonly IMessageService _messageService;
 
     public DrawEventHandler(
         IConnectionManager connectionManager,
+        IMessageService messageService,
         ILogger<DrawEventHandler> logger)
     {
         _connectionManager = connectionManager;
+        _messageService = messageService;
         _logger = logger;
     }
 
@@ -43,7 +47,7 @@ public class DrawEventHandler : IDrawEventHandler
             if (!string.IsNullOrEmpty(roomId))
             {
                 // Broadcast the drawing data to all clients in the room
-                await _connectionManager.BroadcastToRoom(roomId, drawingData);
+                await _messageService.BroadcastToRoom(roomId, drawingData);
 
                 if (!drawEvent.isInProgress)
                 {

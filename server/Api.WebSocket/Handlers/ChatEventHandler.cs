@@ -13,10 +13,12 @@ public class ChatEventHandler : IChatEventHandler
     private readonly ILogger<ChatEventHandler> _logger;
     private readonly IGameOrchestrationService _gameService;
     private readonly IScoreService _scoreService;
+    private readonly IMessageService _messageService;
     
     public ChatEventHandler(IConnectionManager connectionManager,
         ILogger<ChatEventHandler> logger,
         IGameOrchestrationService gameService,
+        IMessageService messageService,
         IScoreService scoreService
         )
     {
@@ -24,6 +26,7 @@ public class ChatEventHandler : IChatEventHandler
         _logger = logger;
         _gameService = gameService;
         _scoreService = scoreService;
+        _messageService = messageService;
     }
 
     public async Task HandleChatEvent(string clientId, string messageJson)
@@ -51,7 +54,7 @@ public class ChatEventHandler : IChatEventHandler
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             {
                 _logger.LogInformation($"Received chat message: {chatMessage.Message} the correct word is {game.CurrentWord} - not correct, sending to all clients in room {roomId}");
-                await _connectionManager.BroadcastToRoom(roomId, messageJson);
+                await _messageService.BroadcastToRoom(roomId, messageJson);
             }
 
             if (!string.IsNullOrEmpty(chatMessage.Message.Trim()))

@@ -1,5 +1,3 @@
-using NSwag;
-using NSwag.Generation.Processors.Security;
 using Application;
 using Api.Rest;
 using Api.WebSocket;

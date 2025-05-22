@@ -15,13 +15,16 @@ namespace Infrastructure.Websocket.Services;
 /// </summary>
 public class NotificationService : INotificationService
 {
-    private readonly IConnectionManager _connectionManager;
+    private readonly IMessageService _messageService;
     private readonly ILogger<NotificationService> _logger;
+    private readonly IConnectionManager _connectionManager;
 
     public NotificationService(
+        IMessageService messageService,
         IConnectionManager connectionManager,
         ILogger<NotificationService> logger)
     {
+        _messageService = messageService;
         _connectionManager = connectionManager;
         _logger = logger;
     }
@@ -40,7 +43,7 @@ public class NotificationService : INotificationService
                 game.RoundTimeSeconds
             );
             
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of game creation", roomId);
         }
@@ -63,7 +66,7 @@ public class NotificationService : INotificationService
             );
             
 
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of game start", roomId);
         }
@@ -83,7 +86,7 @@ public class NotificationService : INotificationService
                 username
                 );
 
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
 
             _logger.LogInformation("Notified room {RoomId} of username: {Username} joining game", roomId, username);
 
@@ -111,7 +114,7 @@ public class NotificationService : INotificationService
             );
             
 
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of round {Round} start", roomId, game.CurrentRound);
         }
@@ -137,7 +140,7 @@ public class NotificationService : INotificationService
                 // This method doesnt have the generic capabilities
                 // that my broadcastToRoom does so we serialize first
                 var jsonMessage = JsonSerializer.Serialize(notification);
-                await _connectionManager.SendToClient(clientId, jsonMessage);
+                await _messageService.SendToClient(clientId, jsonMessage);
             }
             
             _logger.LogInformation("Sent word to drawer {DrawerId}", drawerId);
@@ -163,7 +166,7 @@ public class NotificationService : INotificationService
             );
             
 
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of round {Round} end", roomId, game.CurrentRound);
         }
@@ -185,7 +188,7 @@ public class NotificationService : INotificationService
                 game.Status.ToString()
             );
             
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of game end", roomId);
         }
@@ -204,7 +207,7 @@ public class NotificationService : INotificationService
         {
             var notification = new DrawerSelectedDto(drawerId, drawerName);
             
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of drawer selection: {DrawerName}", roomId, drawerName);
         }
@@ -226,7 +229,7 @@ public class NotificationService : INotificationService
                 room.IsPrivate
             );
             
-            await _connectionManager.BroadcastToRoom("lobby", notification);
+            await _messageService.BroadcastToRoom("lobby", notification);
             
             _logger.LogInformation("Broadcast room creation: {RoomId}", room.Id);
         }
@@ -242,7 +245,7 @@ public class NotificationService : INotificationService
         {
             var notification = new RoomDeletedDto(roomId);
 
-            await _connectionManager.BroadcastToRoom("lobby", notification);
+            await _messageService.BroadcastToRoom("lobby", notification);
 
             _logger.LogInformation("Broadcast room deleted: {RoomId}", roomId);
         }
@@ -258,7 +261,7 @@ public class NotificationService : INotificationService
         {
             var notification = new UpdateScoreDto(gameId, userId, pointsGained, totalPoints);
             
-            await _connectionManager.BroadcastToRoom(roomId, notification);
+            await _messageService.BroadcastToRoom(roomId, notification);
             
             _logger.LogInformation("Notified room {RoomId} of score update for user {UserId}: +{PointsGained} (Total: {TotalPoints})", 
             roomId, userId, pointsGained, totalPoints);

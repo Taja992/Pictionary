@@ -12,5 +12,7 @@ public static class WebSocketInfrastructureExtensions
         services.AddSingleton<IConnectionManager, ConnectionManager>();
         services.AddScoped<IWebSocketHandler, WebSocketHandler>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddSingleton<IMessageRouter, MessageRouter>();
+        services.AddSingleton<IMessageService, MessageService>();
     }
 }

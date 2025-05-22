@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Application.Interfaces.WebsocketInterfaces;
@@ -12,22 +13,16 @@ public class WebSocketHandler : IWebSocketHandler
 {
     private readonly IConnectionManager _connectionManager;
     private readonly ILogger<WebSocketHandler> _logger;
-    private readonly IDrawEventHandler _drawEventHandler;
-    private readonly IChatEventHandler _chatEventHandler;
-    private readonly IRoomEventHandler _roomEventHandler;
+    private readonly IMessageRouter _messageRouter;
 
     public WebSocketHandler(
         IConnectionManager connectionManager,
         ILogger<WebSocketHandler> logger,
-        IDrawEventHandler drawEventHandler,
-        IRoomEventHandler roomEventHandler,
-        IChatEventHandler chatEventHandler)
+        IMessageRouter messageRouter)
     {
         _connectionManager = connectionManager;
         _logger = logger;
-        _drawEventHandler = drawEventHandler;
-        _chatEventHandler = chatEventHandler;
-        _roomEventHandler = roomEventHandler;
+        _messageRouter = messageRouter;
     }
 
     public async Task ProcessWebSocketAsync(object context)
@@ -84,7 +79,7 @@ public class WebSocketHandler : IWebSocketHandler
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await HandleMessageAsync(webSocket, clientId, message);
+                    await _messageRouter.RouteMessage(webSocket, clientId, message);
                 }
             }
             catch (Exception ex)
@@ -95,97 +90,97 @@ public class WebSocketHandler : IWebSocketHandler
         }
     }
 
-    private async Task HandleMessageAsync(System.Net.WebSockets.WebSocket webSocket, string clientId, string message)
-    {
-        try
-        {
-            var baseMessage = JsonSerializer.Deserialize<BaseDto>(message);
-            
-            if (baseMessage == null)
-            {
-                _logger.LogWarning("Received invalid message format from {ClientId}", clientId);
-                return;
-            }
-            
-            // Route the message based on eventType
-            // In the HandleMessageAsync method:
-            switch (baseMessage.eventType)
-            {
-                case EventTypes.DrawEvent:
-                // case EventTypes.DrawLine: 
-                case EventTypes.ClearCanvas:
-                    await _drawEventHandler.HandleDrawEvent(clientId, message);
-                    break;
-        
-                case EventTypes.ChatMessage:
-                    await _chatEventHandler.HandleChatEvent(clientId, message);
-                    break;
-
-                case EventTypes.RoomJoin:
-                    await _roomEventHandler.HandleJoinRoomEvent(clientId, message);
-                    break;
-    
-                case EventTypes.RoomLeave:
-                    await _roomEventHandler.HandleLeaveRoomEvent(clientId, message);
-                    break;
-    
-                // Notification types
-                // case EventTypes.JoinedGame:
-                // case EventTypes.GameCreated:
-                // case EventTypes.GameStarted:
-                // case EventTypes.RoundStarted:
-                // case EventTypes.RoundEnded:
-                // case EventTypes.GameEnded:
-                // case EventTypes.DrawerSelected:
-                // case EventTypes.DrawerWord:
-                // case EventTypes.RoomCreated:
-                // case EventTypes.RoomDeleted:
-                    // These are outgoing notifications, typically not processed here
-                    // _logger.LogInformation("Received notification type {Type} from client {ClientId}", 
-                    //     baseMessage.eventType, clientId);
-                    // break;
-        
-                default:
-                    _logger.LogWarning("Unhandled message type: {MessageType}", baseMessage.eventType);
-                    break;
-            }
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogError(ex, "Error deserializing message: {Message}", message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing message");
-        }
-    }
-
-    public async Task SendMessageAsync(string clientId, string message)
-    {
-        var webSocket = _connectionManager.GetSocketFromClientId(clientId) as System.Net.WebSockets.WebSocket;
-        if (webSocket != null && webSocket.State == WebSocketState.Open)
-        {
-            var buffer = Encoding.UTF8.GetBytes(message);
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(buffer, 0, buffer.Length),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None);
-        }
-        else
-        {
-            _logger.LogWarning("Cannot send message to client {ClientId}: socket not found or not open", clientId);
-        }
-    }
-
-    public async Task BroadcastMessageAsync(string message)
-    {
-        var socketDictionary = _connectionManager.GetConnectionIdToSocketDictionary();
-        
-        foreach (var clientId in socketDictionary.Keys)
-        {
-            await SendMessageAsync(clientId, message);
-        }
-    }
+    // private async Task HandleMessageAsync(System.Net.WebSockets.WebSocket webSocket, string clientId, string message)
+    // {
+    //     try
+    //     {
+    //         var baseMessage = JsonSerializer.Deserialize<BaseDto>(message);
+    //         
+    //         if (baseMessage == null)
+    //         {
+    //             _logger.LogWarning("Received invalid message format from {ClientId}", clientId);
+    //             return;
+    //         }
+    //         
+    //         // Route the message based on eventType
+    //         // In the HandleMessageAsync method:
+    //         switch (baseMessage.eventType)
+    //         {
+    //             case EventTypes.DrawEvent:
+    //             // case EventTypes.DrawLine: 
+    //             case EventTypes.ClearCanvas:
+    //                 await _drawEventHandler.HandleDrawEvent(clientId, message);
+    //                 break;
+    //     
+    //             case EventTypes.ChatMessage:
+    //                 await _chatEventHandler.HandleChatEvent(clientId, message);
+    //                 break;
+    //
+    //             case EventTypes.RoomJoin:
+    //                 await _roomEventHandler.HandleJoinRoomEvent(clientId, message);
+    //                 break;
+    //
+    //             case EventTypes.RoomLeave:
+    //                 await _roomEventHandler.HandleLeaveRoomEvent(clientId, message);
+    //                 break;
+    //
+    //             // Notification types
+    //             // case EventTypes.JoinedGame:
+    //             // case EventTypes.GameCreated:
+    //             // case EventTypes.GameStarted:
+    //             // case EventTypes.RoundStarted:
+    //             // case EventTypes.RoundEnded:
+    //             // case EventTypes.GameEnded:
+    //             // case EventTypes.DrawerSelected:
+    //             // case EventTypes.DrawerWord:
+    //             // case EventTypes.RoomCreated:
+    //             // case EventTypes.RoomDeleted:
+    //                 // These are outgoing notifications, typically not processed here
+    //                 // _logger.LogInformation("Received notification type {Type} from client {ClientId}", 
+    //                 //     baseMessage.eventType, clientId);
+    //                 // break;
+    //     
+    //             default:
+    //                 _logger.LogWarning("Unhandled message type: {MessageType}", baseMessage.eventType);
+    //                 break;
+    //         }
+    //     }
+    //     catch (JsonException ex)
+    //     {
+    //         _logger.LogError(ex, "Error deserializing message: {Message}", message);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _logger.LogError(ex, "Error processing message");
+    //     }
+    // }
+    //
+    // public async Task SendMessageAsync(string clientId, string message)
+    // {
+    //     var webSocket = _connectionManager.GetSocketFromClientId(clientId) as System.Net.WebSockets.WebSocket;
+    //     if (webSocket != null && webSocket.State == WebSocketState.Open)
+    //     {
+    //         var buffer = Encoding.UTF8.GetBytes(message);
+    //         await webSocket.SendAsync(
+    //             new ArraySegment<byte>(buffer, 0, buffer.Length),
+    //             WebSocketMessageType.Text,
+    //             true,
+    //             CancellationToken.None);
+    //     }
+    //     else
+    //     {
+    //         _logger.LogWarning("Cannot send message to client {ClientId}: socket not found or not open", clientId);
+    //     }
+    // }
+    //
+    // public async Task BroadcastMessageAsync(string message)
+    // {
+    //     var socketDictionary = _connectionManager.GetConnectionIdToSocketDictionary();
+    //     
+    //     foreach (var clientId in socketDictionary.Keys)
+    //     {
+    //         await SendMessageAsync(clientId, message);
+    //     }
+    // }
     
 }

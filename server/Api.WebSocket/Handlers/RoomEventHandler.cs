@@ -10,10 +10,12 @@ public class RoomEventHandler : IRoomEventHandler
 {
     private readonly IConnectionManager _connectionManager;
     private readonly IRoomService _roomService;
+    private readonly IMessageService _messageService;
     
-    public RoomEventHandler(IConnectionManager connectionManager, IRoomService roomService)
+    public RoomEventHandler(IConnectionManager connectionManager, IRoomService roomService, IMessageService messageService)
     {
         _connectionManager = connectionManager;
+        _messageService = messageService;
         _roomService = roomService;
     }
 
@@ -42,7 +44,7 @@ public class RoomEventHandler : IRoomEventHandler
                     Action = RoomAction.Joined
                 };
 
-                await _connectionManager.BroadcastToRoom(joinRequest.RoomId, updateMessage);
+                await _messageService.BroadcastToRoom(joinRequest.RoomId, updateMessage);
             }
         }
         catch (Exception ex)
@@ -75,10 +77,10 @@ public class RoomEventHandler : IRoomEventHandler
                     Action = RoomAction.Left
                 };
 
-                await _connectionManager.BroadcastToRoom(leaveRequest.RoomId, updateMessage);
+                await _messageService.BroadcastToRoom(leaveRequest.RoomId, updateMessage);
             }
         } 
-            catch (Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine($"Error handling leave room event: {ex.Message}");
         }
