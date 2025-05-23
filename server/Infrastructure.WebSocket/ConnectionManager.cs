@@ -1,7 +1,11 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Application.Interfaces.WebsocketInterfaces;
+using Application.Models;
+using System.Net.WebSockets;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Websocket;
 
@@ -9,6 +13,7 @@ namespace Infrastructure.Websocket;
 public class ConnectionManager : IConnectionManager
 {
     private readonly ILogger<ConnectionManager> _logger;
+    private readonly AppOptions _options;
 
     // Maps Client ID > Socket
     private readonly ConcurrentDictionary<string, System.Net.WebSockets.WebSocket> _clientIdToSocket = new();
@@ -21,10 +26,14 @@ public class ConnectionManager : IConnectionManager
     private readonly ConcurrentDictionary<string, string> _clientIdToUserId = new();
     private readonly ConcurrentDictionary<string, string> _clientIdToUsername = new();
     private readonly ConcurrentDictionary<string, HashSet<string>> _userIdToClientIds = new();
-    
-    public ConnectionManager(ILogger<ConnectionManager> logger)
+    private readonly ConcurrentDictionary<string, DateTime> _lastActivityTime = new();
+    private readonly TimeSpan _connectionTimeout;
+
+    public ConnectionManager(ILogger<ConnectionManager> logger, IOptions<AppOptions> options)
     {
         _logger = logger;
+        _options = options.Value;
+        _connectionTimeout = TimeSpan.FromMinutes(_options.WebSocket.ConnectionTimeoutMinutes);
     }
 
     /// <summary>
@@ -42,7 +51,7 @@ public class ConnectionManager : IConnectionManager
         }
         return result;
     }
-    
+
     /// <summary>
     /// Returns a dictionary mapping socket identifiers to client IDs.
     /// Since System.Net.WebSockets.WebSocket doesn't have built-in IDs, 
@@ -72,6 +81,8 @@ public class ConnectionManager : IConnectionManager
             _clientIdToSocket.TryAdd(clientId, webSocket);
             _socketToClientId.TryAdd(webSocket, clientId);
 
+            UpdateClientActivity(clientId);
+
             if (!string.IsNullOrEmpty(userId))
             {
                 _clientIdToUserId[clientId] = userId;
@@ -80,7 +91,8 @@ public class ConnectionManager : IConnectionManager
                 _userIdToClientIds.AddOrUpdate(
                     userId,
                     _ => new HashSet<string> { clientId },
-                    (_, clientIds) => {
+                    (_, clientIds) =>
+                    {
                         clientIds.Add(clientId);
                         return clientIds;
                     });
@@ -94,7 +106,7 @@ public class ConnectionManager : IConnectionManager
             await AddToRoom("lobby", clientId);
 
             string displayName = !string.IsNullOrEmpty(username) ? username : clientId;
-            _logger.LogInformation("Client {ClientId} connected (User: {UserId}, Username: {Username})", 
+            _logger.LogInformation("Client {ClientId} connected (User: {UserId}, Username: {Username})",
             clientId, userId, displayName);
         }
         else
@@ -122,10 +134,11 @@ public class ConnectionManager : IConnectionManager
             _clientIdToUserId.TryGetValue(clientId, out string? userId);
             _clientIdToUsername.TryGetValue(clientId, out string? username);
 
+            _lastActivityTime.TryRemove(clientId, out _);
 
             // Remove from client-to-socket mapping
             _clientIdToSocket.TryRemove(clientId, out _);
-            
+
             // remove from user mappings
             _clientIdToUserId.TryRemove(clientId, out _);
             _clientIdToUsername.TryRemove(clientId, out _);
@@ -139,7 +152,7 @@ public class ConnectionManager : IConnectionManager
                     _userIdToClientIds.TryRemove(userId, out _);
                 }
             }
-            
+
             // Remove client from all rooms
             if (_clientIdToRooms.TryGetValue(clientId, out var rooms))
             {
@@ -152,7 +165,7 @@ public class ConnectionManager : IConnectionManager
             }
 
             string displayName = !string.IsNullOrEmpty(username) ? username : clientId;
-            _logger.LogInformation("Client {ClientId} disconnected (User: {UserId}, Username: {Username})", 
+            _logger.LogInformation("Client {ClientId} disconnected (User: {UserId}, Username: {Username})",
             clientId, userId ?? string.Empty, displayName);
         }
 
@@ -181,7 +194,7 @@ public class ConnectionManager : IConnectionManager
                 clients.Add(clientId);
                 return clients;
             });
-        
+
         // Add room to client's list
         _clientIdToRooms.AddOrUpdate(
             clientId,
@@ -196,7 +209,7 @@ public class ConnectionManager : IConnectionManager
         LogCurrentState();
         return Task.CompletedTask;
     }
-    
+
 
 
     public Task RemoveFromRoom(string room, string clientId)
@@ -205,24 +218,24 @@ public class ConnectionManager : IConnectionManager
         {
             return Task.CompletedTask;
         }
-        
+
         // Remove client from room
         if (_roomsToClientId.TryGetValue(room, out var clients))
         {
             clients.Remove(clientId);
-            
+
             // Remove room if empty
             if (clients.Count == 0)
             {
                 _roomsToClientId.TryRemove(room, out _);
             }
         }
-        
+
         // Remove room from client's list
         if (_clientIdToRooms.TryGetValue(clientId, out var rooms))
         {
             rooms.Remove(room);
-            
+
             // Remove client if no room
             if (rooms.Count == 0)
             {
@@ -231,17 +244,17 @@ public class ConnectionManager : IConnectionManager
         }
 
         _logger.LogInformation("Client {ClientId} removed from room {Room}", clientId, room);
-        LogCurrentState();  
+        LogCurrentState();
         return Task.CompletedTask;
     }
-    
+
     public Task<List<string>> GetClientsFromRoomId(string room)
     {
         if (string.IsNullOrEmpty(room) || !_roomsToClientId.TryGetValue(room, out var clients))
         {
             return Task.FromResult(new List<string>());
         }
-        
+
         return Task.FromResult(clients.ToList());
     }
 
@@ -253,10 +266,10 @@ public class ConnectionManager : IConnectionManager
         {
             return Task.FromResult(new List<string>());
         }
-        
+
         return Task.FromResult(rooms.ToList());
     }
-    
+
 
     public Task<List<string>> GetClientIdsForUser(string userId)
     {
@@ -267,7 +280,7 @@ public class ConnectionManager : IConnectionManager
 
         return Task.FromResult(clientIds.ToList());
     }
-    
+
 
     /// <summary>
     /// Gets the WebSocket connection object for a specific client ID.
@@ -280,7 +293,7 @@ public class ConnectionManager : IConnectionManager
         {
             return socket;
         }
-        
+
         return null;
     }
 
@@ -303,7 +316,7 @@ public class ConnectionManager : IConnectionManager
         {
             var clientToSocket = GetConnectionIdToSocketDictionary();
             var socketToClient = GetSocketIdToClientIdDictionary();
-            
+
             var state = new
             {
                 Connections = clientToSocket.Keys,
@@ -312,7 +325,7 @@ public class ConnectionManager : IConnectionManager
                 Rooms = _roomsToClientId,
                 ClientRooms = _clientIdToRooms
             };
-    
+
             _logger.LogDebug("Current state: {State}",
                 JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
         }
@@ -320,8 +333,71 @@ public class ConnectionManager : IConnectionManager
         {
             _logger.LogError(ex, "Error logging connection state");
         }
-        
+
         return Task.CompletedTask;
+    }
+
+    public void UpdateClientActivity(string clientId)
+    {
+        if (!string.IsNullOrEmpty(clientId))
+        {
+            _lastActivityTime[clientId] = DateTime.UtcNow;
+        }
+    }
+
+    private bool IsConnectionStale(string clientId)
+    {
+        if (_lastActivityTime.TryGetValue(clientId, out var lastActivity))
+        {
+            return DateTime.UtcNow - lastActivity > _connectionTimeout;
+        }
+        return true;
+    }
+
+    public async Task CleanupStaleConnections()
+    {
+        var staleClientIds = _lastActivityTime
+        .Where(kvp => DateTime.UtcNow - kvp.Value > _connectionTimeout)
+        .Select(kvp => kvp.Key)
+        .ToList();
+
+        if (staleClientIds.Count > 0)
+        {
+            _logger.LogInformation("Cleaning up {Count} stale connections", staleClientIds.Count);
+
+            foreach (var clientId in staleClientIds)
+            {
+                if (_clientIdToSocket.TryGetValue(clientId, out var socket) && socket is System.Net.WebSockets.WebSocket webSocket)
+                {
+                    try
+                    {
+                        _logger.LogInformation("Closing stale connection for client {ClientId}", clientId);
+
+                        //try to close the connection gracefully
+                        if (webSocket.State == WebSocketState.Open)
+                        {
+                            await webSocket.CloseAsync(
+                                WebSocketCloseStatus.NormalClosure,
+                                "Connection closed due to inactivity",
+                                CancellationToken.None);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error closing stale connection for {ClientId}", clientId);
+                    }
+                    finally
+                    {
+                        // Clean up the connection
+                        await OnClose(webSocket, clientId);
+                    }
+                }
+            }
+        }
+        else
+        {
+            _logger.LogDebug("No stale connections to clean up");
+        }
     }
     
 }

@@ -16,4 +16,7 @@ public interface IConnectionManager
     Task<List<string>> GetRoomsFromClientId(string clientId);
     public object? GetSocketFromClientId(string clientId);
     Task<string> GetUserIdFromClientId(string clientId);
+    void UpdateClientActivity(string clientId);
+    Task CleanupStaleConnections();
+
 }

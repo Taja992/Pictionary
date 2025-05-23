@@ -36,10 +36,6 @@ using (var scope = app.Services.CreateScope())
 }
 ```
 
-# Pictionary Game Architecture
-
-The Pictionary game is built with a clean, layered architecture. Below are diagrams showing the overall architecture and key subsystems.
-
 ## Server Architecture Overview
 
 ```mermaid

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Application.Interfaces.WebsocketInterfaces;
 using Infrastructure.Websocket.Services;
+using Infrastructure.WebSocket.Services;
 
 namespace Infrastructure.Websocket;
 
@@ -14,5 +15,6 @@ public static class WebSocketInfrastructureExtensions
         services.AddScoped<INotificationService, NotificationService>();
         services.AddSingleton<IMessageRouter, MessageRouter>();
         services.AddSingleton<IMessageService, MessageService>();
+        services.AddHostedService<ConnectionMonitorService>();
     }
 }

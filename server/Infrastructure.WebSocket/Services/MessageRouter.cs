@@ -25,10 +25,13 @@ public class MessageRouter : IMessageRouter
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MessageRouter> _logger;
+    private readonly IConnectionManager? _connectionManager;
 
-    public MessageRouter(IServiceProvider serviceProvider, ILogger<MessageRouter> logger)
+    public MessageRouter(IServiceProvider serviceProvider, ILogger<MessageRouter> logger, IConnectionManager? connectionManager = null)
+    
     {
         _serviceProvider = serviceProvider;
+        _connectionManager = connectionManager;
         _logger = logger;
     }
     
@@ -43,10 +46,18 @@ public class MessageRouter : IMessageRouter
                 _logger.LogWarning("Received invalid message format from {ClientId}", clientId);
                 return;
             }
+
+            _connectionManager?.UpdateClientActivity(clientId);
+
+            if (baseMessage.eventType == EventTypes.Ping)
+            {
+                _logger.LogDebug("Received ping from client {ClientId}", clientId);
+                return;
+            }
             
             // Create a new scope for each message to properly manage scoped services
-            // This ensures each handler gets its own properly scoped dependencies
-            using var scope = _serviceProvider.CreateScope();
+                // This ensures each handler gets its own properly scoped dependencies
+                using var scope = _serviceProvider.CreateScope();
 
             // Route message based on eventType
             switch (baseMessage.eventType)

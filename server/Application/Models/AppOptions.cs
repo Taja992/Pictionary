@@ -8,6 +8,12 @@ namespace Application.Models
     //     public int ExpiryMinutes { get; set; } = 60 * 24 * 7; // 7 days in minutes
     // }
     
+    public class WebSocketOptions
+    {
+        public int ConnectionTimeoutMinutes { get; set; } = 5;
+        public int MonitorCheckIntervalMinutes { get; set; } = 5;
+    }
+    
     public class AppOptions
     {
         public int PORT { get; set; } = 8080;
@@ -19,5 +25,7 @@ namespace Application.Models
         public string POSTGRES_CONNECTION_STRING { get; set; } = "Host=localhost;Database=pictionary;Username=postgres;Password=postgres";
         
         public bool Seed { get; set; } = false;
+        
+        public WebSocketOptions WebSocket { get; set; } = new WebSocketOptions();
     }
 }

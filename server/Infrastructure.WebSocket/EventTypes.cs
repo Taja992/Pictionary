@@ -9,8 +9,9 @@ public static class EventTypes
     public const string DrawEvent = "DrawEvent";
     public const string DrawLine = "DrawLine";
     public const string ClearCanvas = "ClearCanvas";
-    
-    
+    public const string Ping = "ping";
+
+
     // Server -> Client notifications
     public const string GameCreated = "game:created";
     public const string JoinedGame = "game:joined";
