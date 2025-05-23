@@ -142,6 +142,10 @@ public class RoomService : IRoomService
         // If the user is the owner, delete the room
         if (room.OwnerId == userId)
         {
+            if(room.CurrentGame != null)
+            {
+                await _gameService.EndGameAsync(room.CurrentGame.Id);
+            }
             await _roomRepository.DeleteAsync(roomId);
             
             await _notificationService.NotifyRoomDeleted(roomId);

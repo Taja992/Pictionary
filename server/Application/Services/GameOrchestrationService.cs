@@ -158,6 +158,12 @@ public class GameOrchestrationService : IGameOrchestrationService
         return true;
     }
 
+    public async Task EndGameAsync(string gameId)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        await EndGameWithScopeAsync(gameId, scope);
+    }
+
     private async Task<Game> StartRoundWithScopeAsync(string gameId, IServiceScope scope)
     {
         // Get fresh repositories from the scope
