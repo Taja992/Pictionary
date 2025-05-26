@@ -396,8 +396,7 @@ public class GameOrchestrationService : IGameOrchestrationService
         // Set game state to round end
         game.Status = GameStatus.RoundEnd;
 
-        // Clear current word and drawer
-        game.CurrentWord = null;
+        // Clear current drawer
         game.CurrentDrawerId = null;
 
         await services.GameRepository.UpdateAsync(game);

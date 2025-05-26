@@ -162,7 +162,8 @@ public class NotificationService : INotificationService
                 game.Id,
                 game.CurrentRound,
                 game.TotalRounds,
-                game.CurrentRound >= game.TotalRounds
+                game.CurrentRound >= game.TotalRounds,
+                game.CurrentWord
             );
             
 

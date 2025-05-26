@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAtom } from 'jotai';
-import { currentGameAtom, isDrawerAtom, isRoomOwnerAtom } from '../../atoms';
+import { currentGameAtom, isDrawerAtom, isRoomOwnerAtom, lastRoundWordAtom } from '../../atoms';
 import DrawingCanvas from './DrawingCanvas';
 import CreateGameForm from './CreateGameForm';
 import './game.css';
@@ -14,6 +14,7 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
   const [isDrawer] = useAtom(isDrawerAtom);
   const [isRoomOwner] = useAtom(isRoomOwnerAtom);
   const [showCreateGame, setShowCreateGame] = useState(isRoomOwner && !currentGame);
+  const [lastRoundWord] = useAtom(lastRoundWordAtom); 
   
   // No game exists yet
   if (!currentGame) {
@@ -66,29 +67,41 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
       );
     
     case 'RoundEnd':
+      console.log('RoundEnd - currentGame:', currentGame);
       return (
         <div className="drawing-area waiting-container">
           <h2>Round {currentGame.currentRound} ended!</h2>
-          <p className="waiting-message">The word was: <strong>{currentGame.currentWord}</strong></p>
+          <p className="waiting-message">
+            The word was: <strong>{lastRoundWord || 'Unknown'}</strong>
+          </p>
           <p className="waiting-message">Preparing for next round...</p>
         </div>
       );
     
     case 'GameEnd':
-      return (
-        <div className="drawing-area waiting-container">
-          <h2>Game Over!</h2>
-          <p className="waiting-message">Thanks for playing!</p>
-          {isRoomOwner && (
-            <button 
-              className="create-game-btn mt-4"
-              onClick={() => setShowCreateGame(true)}
-            >
-              Create New Game
-            </button>
-          )}
-        </div>
-      );
+  return (
+    <div className="drawing-area waiting-container">
+      <h2>Game Over! The last word was <strong>{lastRoundWord || 'Unknown'}</strong></h2>
+      <p className="waiting-message">Thanks for playing!</p>
+      {isRoomOwner && (
+        showCreateGame ? (
+          <CreateGameForm 
+            onGameCreated={(gameId) => {
+              console.log(`Game ${gameId} was created`);
+              setShowCreateGame(false);
+            }}
+          />
+        ) : (
+          <button 
+            className="create-game-btn mt-4"
+            onClick={() => setShowCreateGame(true)}
+          >
+            Create New Game
+          </button>
+        )
+      )}
+    </div>
+  );
     
     default:
       return (

@@ -125,6 +125,7 @@ export interface RoundEndedEvent extends BaseMessage {
   RoundNumber: number;
   TotalRounds: number;
   IsLastRound: boolean;
+  CurrentWord?: string;
 }
 
 export interface GameEndedEvent extends BaseMessage {

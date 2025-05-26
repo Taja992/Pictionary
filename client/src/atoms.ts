@@ -12,7 +12,7 @@ export const currentRoomAtom = atom<RoomDto | null>(null);
 // Current Game
 export const currentGameAtom = atom<GameDto | null>(null);
 export const isDrawerAtom = atom<boolean>(false);
-
+export const lastRoundWordAtom = atom<string | null>(null);
 
 // Check room owner
 export const isRoomOwnerAtom = atom((get) => {

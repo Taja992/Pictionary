@@ -3,7 +3,8 @@ import { useAtom } from 'jotai';
 import { useWsClient } from 'ws-request-hook';
 import {
   currentGameAtom, userAtom, isDrawerAtom, 
-  roomPlayersAtom, gamePlayersAtom, systemMessagesAtom 
+  roomPlayersAtom, gamePlayersAtom, systemMessagesAtom, 
+  lastRoundWordAtom
 } from '../atoms';
 
 import { DrawerSelectedEvent, DrawerWordEvent,
@@ -29,6 +30,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   const [, setSystemMessages] = useAtom(systemMessagesAtom);
   const hasJoinedRef = useRef(false);
   const isNavigatingAwayRef = useRef(false);
+  const [, setLastRoundWord] = useAtom(lastRoundWordAtom); 
   
   // Get the client with all its functions
   const { 
@@ -272,10 +274,10 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
       MessageType.ROUND_ENDED,
       (message) => {
         console.log('Round ended:', message);
+        setLastRoundWord(message.CurrentWord || null);
         setCurrentGame(prev => prev ? {
           ...prev,
           status: 'RoundEnd',
-          currentWord: null,
           currentDrawerId: null
         } : null);
         
@@ -312,7 +314,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           ...prev,
           status: message.Status,
           currentDrawerId: null,
-          currentWord: null,
           endTime: new Date().toISOString()
         } : null);
         
