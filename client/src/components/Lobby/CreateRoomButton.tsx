@@ -61,21 +61,23 @@ export default function CreateRoomButton({ className = '' }: CreateRoomButtonPro
   };
 
   return (
-    <>
+  <>
+    {!showCreateModal && (
       <button 
         className={`btn btn-primary ${className}`} 
         onClick={handleCreateRoom}
       >
         Create Room
       </button>
-      
-      <CreateRoom
-        isOpen={showCreateModal}
-        isLoading={isLoading}
-        username={user.username || ''}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateRoomSubmit}
-      />
-    </>
+    )}
+    
+    <CreateRoom
+      isOpen={showCreateModal}
+      isLoading={isLoading}
+      username={user.username || ''}
+      onClose={() => setShowCreateModal(false)}
+      onSubmit={handleCreateRoomSubmit}
+    />
+  </>
   );
 }
