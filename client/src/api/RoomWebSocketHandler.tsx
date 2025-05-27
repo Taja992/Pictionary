@@ -208,9 +208,13 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           status: 'Playing',
           currentRound: message.CurrentRound
         } : null);
-        
-        // Properly copy room players to game players
-        setGamePlayers([...roomPlayers]);
+          // Properly copy room players to game players with game-specific properties
+        setGamePlayers(roomPlayers.map(player => ({
+          ...player,
+          totalPoints: 0,
+          lastPointsGained: undefined,
+          lastScoreTime: undefined
+        })));
       }
     );
     unsubscribeHandlers.push(unsubGameStarted);
@@ -293,7 +297,8 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           return [...prev, {
             id: message.UserId,
             name: message.Username,
-            isOnline: true
+            isOnline: true,
+            totalPoints: 0
           }]
         })
       });
@@ -327,7 +332,8 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
             if (!prev.some(p => p.id === message.UserId)) {
               return [...prev, {
                 id: message.UserId,
-                name: message.Username
+                name: message.Username,
+                isOnline: true
               }];
             }
             return prev;

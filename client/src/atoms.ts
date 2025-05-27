@@ -43,15 +43,24 @@ interface UserDtoExpiration extends UserDto {
 // Create the user atom with expiration time
 export const userAtom = atomWithStorage<UserDtoExpiration>('pictionary_user', defaultUser);
 
-interface GamePlayerDto extends PlayerDto {
-  totalPoints?: number;
-  lastPointsGained?: number;
+// Made 2 difference interfaces because roomplayers
+// wont necessarily have points, we make isonline required to avoid
+// a bunch of null checks
+export interface RoomPlayer extends PlayerDto {
+  isOnline: boolean;
+}
+
+export interface GamePlayer extends PlayerDto {
+  isOnline: boolean; // this is just for consistency
+  totalPoints: number;
+  lastPointsGained?: number; // this and next are for animation
   lastScoreTime?: Date;
 }
 
-export const gamePlayersAtom = atom<GamePlayerDto[]>([]);
-// Players List
-export const roomPlayersAtom = atom<PlayerDto[]>([]);
+// Separate for the 2 seperate lists
+export const roomPlayersAtom = atom<RoomPlayer[]>([]);
+
+export const gamePlayersAtom = atom<GamePlayer[]>([]);
 
 
 export interface SystemMessage {

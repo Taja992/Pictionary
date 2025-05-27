@@ -60,7 +60,10 @@ export default function RoomPage() {
         
         // Update room players list from room data
         if (roomResponse.data.players) {
-          setRoomPlayers(roomResponse.data.players);
+          setRoomPlayers(roomResponse.data.players.map(player => ({
+            ...player,
+            isOnline: player.isOnline ?? true // This is required because of atom
+          })));
         }
         
         // If room has an active game, fetch game details
