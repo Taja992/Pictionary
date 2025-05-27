@@ -15,6 +15,7 @@ export const currentGameAtom = atom<GameDto | null>(null);
 // This is just to be able to show what the word was to other users at the end of a round
 export const endRoundWordAtom = atom<string | null>(null);
 
+// We set the draweratom and room owner atoms here for 1 consolidated spot
 export const isDrawerAtom = atom((get) => {
   const user = get(userAtom);
   const currentGame = get(currentGameAtom);

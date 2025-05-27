@@ -65,7 +65,6 @@ export default function LobbyPage() {
               name={room.name || ''}
               playerCount={room.playerCount || 0}
               maxPlayers={room.maxPlayers || 8}
-              isPrivate={room.isPrivate ?? false}
               players={room.players || []}
             />
           ))}
