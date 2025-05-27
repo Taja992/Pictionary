@@ -25,25 +25,22 @@ export default function CreateRoomButton({ className = '' }: CreateRoomButtonPro
     }
     setShowCreateModal(true);
   };
-  
-  const handleCreateRoomSubmit = async (request: CreateRoomRequest) => {
+    const handleCreateRoomSubmit = async (request: CreateRoomRequest) => {
     try {
       setIsLoading(true);
 
-      const storedUser = JSON.parse(localStorage.getItem('pictionary_user') || '{}');
-
-      if (!storedUser.id) {
+      if (!user.id) {
         toast.error('User information missing. Please reload the page.');
         return;
       }
 
-      // Use the consistent user ID
+      // Use the user ID from the atom instead of manually parsing localStorage
       const requestWithUserId = {
         ...request,
-        ownerId: storedUser.id  // Make sure this is included!
+        ownerId: user.id  // Use the user atom directly
       };
 
-      console.log('Creating room with user ID:', storedUser.id);
+      console.log('Creating room with user ID:', user.id);
       
       const response = await api.api.roomCreateRoom(requestWithUserId);
       const newRoom = response.data;

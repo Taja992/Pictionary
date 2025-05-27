@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useWsClient } from 'ws-request-hook';
 import { MessageType, ChatMessageDto, generateRequestId } from '../../api';
 import { useAtom } from 'jotai';
-import { systemMessagesAtom } from '../../atoms';
+import { systemMessagesAtom, userAtom } from '../../atoms';
 import './ChatArea.css';
 
 interface Message {
@@ -27,14 +27,15 @@ export default function ChatArea({
 }: ChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [systemMessages] = useAtom(systemMessagesAtom);
+  const [user] = useAtom(userAtom);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Get the WebSocket client
   const { send, onMessage } = useWsClient();
   
-  // Get the current username
-  const currentUsername = username || localStorage.getItem('playerName') || 'You';
+  // Get the current username from the user atom
+  const currentUsername = username || user.username || 'You';
 
   // Scroll to bottom whenever messages change
   const scrollToBottom = () => {
