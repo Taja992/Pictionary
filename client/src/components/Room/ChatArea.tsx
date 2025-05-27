@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useWsClient } from 'ws-request-hook';
-import { MessageType, ChatMessageDto } from '../../api';
+import { MessageType, ChatMessageDto, generateRequestId } from '../../api';
 import { useAtom } from 'jotai';
 import { systemMessagesAtom } from '../../atoms';
 import './ChatArea.css';
@@ -104,9 +104,8 @@ export default function ChatArea({
     };
     
     setMessages(prevMessages => [...prevMessages, newMsg]);
-    
-    // Generate a unique request ID
-    const requestId = Math.random().toString(36).substring(2, 15);
+      // Generate a unique request ID
+    const requestId = generateRequestId();
     
     // Send through WebSocket
     const chatMessage = {

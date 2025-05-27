@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAtom } from 'jotai';
 import { useWsClient } from 'ws-request-hook';
 import {
@@ -14,6 +14,7 @@ import { DrawerSelectedEvent, DrawerWordEvent,
       RoomLeaveDto, RoomUpdateDto,
        RoundEndedEvent, RoundStartedEvent,
       ScoreUpdatedEvent } from './websocket-types';
+import { generateRequestId } from './index';
 import api from './api';
 
 interface RoomWebSocketHandlerProps {
@@ -30,14 +31,8 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   const hasJoinedRef = useRef(false);
   const isNavigatingAwayRef = useRef(false);
   const [, setLastRoundWord] = useAtom(endRoundWordAtom);
-  const [isDrawer] = useAtom(isDrawerAtom);
-  // Get the client with all its functions
+  const [isDrawer] = useAtom(isDrawerAtom);  // Get the client with all its functions
   const {send, readyState, onMessage} = useWsClient();
-
-  // Helper function to generate request IDs
-  const generateRequestId = useCallback(() => {
-    return Math.random().toString(36).substring(2, 15);
-  }, []);
 
   // Add at the beginning of your component:
   useEffect(() => {
@@ -166,7 +161,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
         }
       }
     };
-  }, [roomId, user.id, user.username, readyState, send, generateRequestId]);
+  }, [roomId, user.id, user.username, readyState, send]);
 
   // Setup message handling
   useEffect(() => {

@@ -3,7 +3,7 @@ import { Stage, Layer, Line } from 'react-konva';
 import { useAtom } from 'jotai';
 import { userAtom, currentGameAtom } from '../../atoms';
 import { useWsClient } from 'ws-request-hook';
-import { ClearCanvasDto, DrawEventDto, MessageType } from '../../api';
+import { ClearCanvasDto, DrawEventDto, MessageType, generateRequestId } from '../../api';
 import DrawingTools from './DrawingTools';
 
 interface LineProps {
@@ -143,12 +143,11 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
         stroke: currentColor,
         strokeWidth: currentStrokeWidth
       };
-      
-      // Add line to local state
+        // Add line to local state
       setLines([...lines, newLine]);
       
       // Generate a unique request ID
-      const requestId = Math.random().toString(36).substring(2, 15);
+      const requestId = generateRequestId();
       
       // Send the line via WebSocket
       const drawEvent = {
@@ -173,12 +172,11 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   const handleSizeChange = (size: number) => {
     setCurrentStrokeWidth(size);
   };
-  
-  const handleClearCanvas = () => {
+    const handleClearCanvas = () => {
     setLines([]);
     
     // Generate a unique request ID
-    const requestId = Math.random().toString(36).substring(2, 15);
+    const requestId = generateRequestId();
     
     // Send clear canvas command via WebSocket
     const clearEvent = {
