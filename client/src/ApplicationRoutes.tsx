@@ -12,15 +12,6 @@ import {
 import {  HomeRoute, LobbyRoute, RoomDetailRoute } from "./routeConstants"; 
 
 export default function ApplicationRoutes() {
-  // const navigate = useNavigate();
-  // const [user] = useAtom(userAtom);
-  
-  // useEffect(() => {
-  //   // You could handle initialization or auth redirects here
-  //   if (!user.username) {
-  //     // Some action could happen here if needed
-  //   }
-  // }, [user, navigate]);
   
   return (
     <>

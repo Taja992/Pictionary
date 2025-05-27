@@ -56,17 +56,6 @@ export default function RoomCard({
   const joinRoom = async () => {
     try {
       setIsLoading(true);
-      //passwordToUse?: string
-
-      // Join the room with or without password
-      // const userId = user.id || '';
-      
-      // // Set joinGame to false to avoid redundancy with WebSocketProvider
-      // await api.api.roomJoinRoom(id, { 
-      //   userId, 
-      //   password: passwordToUse || null,
-      //   joinGame: false  // Change to false
-      // });
       
       // Get room details after joining
       const roomResponse = await api.api.roomGetRoom(id);
@@ -78,7 +67,6 @@ export default function RoomCard({
     } catch (err) {
       console.error('Error joining room:', err);
       toast.error('Failed to join room. Please check your password and try again.');
-      // Keep password input open if there was an error with a private room
       if (!isPrivate) {
         setShowPasswordInput(false);
       }

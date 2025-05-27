@@ -228,7 +228,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           roundTimeSeconds: message.DurationSeconds
         } : null);
         
-        // setIsDrawer(message.DrawerId === user.id);
       }
     );
     unsubscribeHandlers.push(unsubRoundStarted);
@@ -242,8 +241,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           ...prev,
           currentDrawerId: message.DrawerId
         } : null);
-        
-       // setIsDrawer(message.DrawerId === user.id);
       }
     );
     unsubscribeHandlers.push(unsubDrawerSelected);
@@ -275,7 +272,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           currentDrawerId: null
         } : null);
         
-        // setIsDrawer(false);
       }
     );
     unsubscribeHandlers.push(unsubRoundEnded);
@@ -311,8 +307,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           currentDrawerId: null,
           endTime: new Date().toISOString()
         } : null);
-        
-       // setIsDrawer(false);
       }
     );
     unsubscribeHandlers.push(unsubGameEnded);
@@ -419,7 +413,6 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   }, [
     readyState, roomId, user.id, isDrawer, onMessage,
     setCurrentGame,
-    // setIsDrawer,
     roomPlayers,
     setGamePlayers, setRoomPlayers, setSystemMessages
   ]);

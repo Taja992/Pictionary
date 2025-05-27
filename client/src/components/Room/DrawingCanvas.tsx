@@ -17,6 +17,10 @@ interface DrawingCanvasProps {
   roomId: string;
 }
 
+  interface CanvasSize {
+    width: number;
+    height: number;
+  }
 export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) {
   // Get current user
   const [user] = useAtom(userAtom);
@@ -34,9 +38,8 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
   const [isDrawing, setIsDrawing] = useState(false);
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Canvas dimensions
-  const [canvasSize, setCanvasSize] = useState({
+
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>({
     width: 600,
     height: 400
   });
