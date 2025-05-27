@@ -11,9 +11,9 @@ interface LobbyWebSocketHandlerProps {
 
 export default function LobbyWebSocketHandler({ children }: LobbyWebSocketHandlerProps) {
   const { onMessage, readyState } = useWsClient();
-  const [, setRooms] = useAtom(roomsListAtom);  // Read current rooms too
+  const [, setRooms] = useAtom(roomsListAtom); 
 
-  // Add this log to verify handler is running
+  
   console.log("LobbyWebSocketHandler active, readyState:", readyState);
 
   // Setup message handling
@@ -60,7 +60,7 @@ export default function LobbyWebSocketHandler({ children }: LobbyWebSocketHandle
             isPrivate: message.IsPrivate,
             players: [ownerPlayer],
             playerCount: 1,
-            maxPlayers: 8, // Default value, adjust as needed
+            maxPlayers: 8, // Default value
             createdAt: new Date().toISOString(),
             status: 'Waiting',
             currentGameId: null

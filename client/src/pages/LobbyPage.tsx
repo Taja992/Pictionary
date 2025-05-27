@@ -54,7 +54,6 @@ export default function LobbyPage() {
       ) : rooms.length === 0 ? (
         <div className="empty-rooms">
           <p>No active game rooms. Create a new room to start playing!</p>
-          <CreateRoomButton className="mt-4" />
         </div>
       ) : (
         <div className="rooms-list">

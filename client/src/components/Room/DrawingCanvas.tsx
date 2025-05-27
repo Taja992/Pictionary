@@ -131,8 +131,39 @@ export default function DrawingCanvas({ isDrawer, roomId }: DrawingCanvasProps) 
     
     const stage = e.target.getStage();
     const point = stage.getPointerPosition();
-    
-    setCurrentLine(currentLine => [...currentLine, point.x, point.y]);
+
+    const newCurrentLine = [...currentLine, point.x, point.y];
+    setCurrentLine(newCurrentLine);
+
+    // Send incremental updates for long lines
+    if (newCurrentLine.length > 50) { 
+      // Generate a unique request ID
+      const requestId = generateRequestId();
+
+      // line object for current segment
+      const lineSegment = {
+        points: newCurrentLine,
+        stroke: currentColor,
+        strokeWidth: currentStrokeWidth
+      };
+
+      // Add the line segment to the drawer's own lines array
+      setLines(prevLines => [...prevLines, lineSegment]);
+
+      // Send the partial line via WebSocket
+      const drawEvent = {
+        eventType: MessageType.DRAW_EVENT,
+        requestId: requestId,
+        RoomId: roomId,
+        Username: username,
+        LineData: lineSegment,
+        IsInProgress: true // Mark as in-progress
+      };
+
+      send(drawEvent);
+
+      setCurrentLine([newCurrentLine[newCurrentLine.length - 2], newCurrentLine[newCurrentLine.length - 1]]);
+    }
   };
   
   const handleMouseUp = () => {

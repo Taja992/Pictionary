@@ -34,24 +34,19 @@ export default function CreateRoomButton({ className = '' }: CreateRoomButtonPro
         return;
       }
 
-      // Use the user ID from the atom instead of manually parsing localStorage
       const requestWithUserId = {
         ...request,
-        ownerId: user.id  // Use the user atom directly
+        ownerId: user.id
       };
 
       console.log('Creating room with user ID:', user.id);
       
       const response = await api.api.roomCreateRoom(requestWithUserId);
       const newRoom = response.data;
-
-      // Add the new room to the list
-      //setRooms(prevRooms => [...prevRooms, newRoom]);
       
       // Close modal
       setShowCreateModal(false);
       
-      // Show success message
       toast.success('Room created successfully!');
       
       // Navigate to the new room

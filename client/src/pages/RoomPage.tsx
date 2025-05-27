@@ -119,15 +119,6 @@ export default function RoomPage() {
     <div className="full-width-container">
       <RoomWebSocketHandler roomId={roomId}>
         <div className="game-container">
-          {/* <GameHeader
-            roomName={currentRoom?.name || 'Game Room'}
-            round={currentGame?.currentRound || 0}
-            maxRounds={currentGame?.totalRounds || 0}
-            word={currentGame?.currentWord || ''}
-            timeLeft={currentGame?.roundTimeSeconds || 0}
-            gameStatus={currentGame?.status || 'waiting'}
-          />
-           */}
           <div className="game-area">
             <div className="players-section">
               <GamePlayerList />

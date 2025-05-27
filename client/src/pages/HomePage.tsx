@@ -4,7 +4,7 @@ import { userAtom } from '../atoms';
 import CreateTempUser from '../components/Home/CreateTempUser';
 import { useEffect } from 'react';
 import { LobbyRoute } from '../routeConstants';
-import './HomePage.css'; // We'll create this CSS file
+import './HomePage.css';
 
 export default function HomePage() {
   const navigate = useNavigate();

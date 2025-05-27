@@ -34,7 +34,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
   const [isDrawer] = useAtom(isDrawerAtom);  // Get the client with all its functions
   const {send, readyState, onMessage} = useWsClient();
 
-  // Add at the beginning of your component:
+
   useEffect(() => {
     // Clear system messages when first entering a room
     setSystemMessages([]);
@@ -110,7 +110,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
                   console.error('Error checking game status after join:', err);
                 });
           }
-        }, 500); // Small delay to ensure server has processed the join // Small delay to ensure server has processed the join
+        }, 500); // Small delay to ensure server has processed the join
       } catch (err) {
         console.error('Failed to join room:', err);
       }
@@ -203,7 +203,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           status: 'Playing',
           currentRound: message.CurrentRound
         } : null);
-          // Properly copy room players to game players with game-specific properties
+          // copy room players to game players with game-specific properties
         setGamePlayers(roomPlayers.map(player => ({
           ...player,
           totalPoints: 0,
@@ -395,7 +395,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           );
         });
         
-        // Optionally add a system message about the score
+       
         setSystemMessages(prev => [...prev, {
           id: Date.now().toString(),
           text: `${roomPlayers.find(p => p.id === message.UserId)?.name || 'Someone'} guessed correctly! (+${message.PointsGained} points)`,
