@@ -18,13 +18,11 @@ export default function CreateRoom({
 }: CreateRoomProps) {
   const [formData, setFormData] = useState<CreateRoomRequest>({
     name: '',
-    username: username,
-    isPrivate: false,
-    password: null
+    username: username
   });
   
   if (!isOpen) return null;
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -38,11 +36,9 @@ export default function CreateRoom({
     
     // Validate form
     if (!formData.name?.trim()) return;
-    
-    // If not private, ensure password is null
+
     const request: CreateRoomRequest = {
-      ...formData,
-      password: formData.isPrivate ? formData.password : null
+      ...formData
     };
     
     onSubmit(request);
@@ -65,35 +61,7 @@ export default function CreateRoom({
               required
             />
           </div>
-          
-          <div className="form-group form-check">
-            <input
-              id="isPrivate"
-              name="isPrivate"
-              type="checkbox"
-              checked={formData.isPrivate || false}
-              onChange={handleChange}
-              className="form-check-input"
-            />
-            <label htmlFor="isPrivate" className="form-check-label">
-              Private Room
-            </label>
-          </div>
-          
-          {formData.isPrivate && (
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password || ''}
-                onChange={handleChange}
-                placeholder="Enter room password"
-                required={formData.isPrivate}
-              />
-            </div>
-          )}
+
           
           <div className="modal-actions">
             <button 

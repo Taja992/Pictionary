@@ -10,7 +10,6 @@ interface RoomCardProps {
   name: string;
   playerCount: number;
   maxPlayers: number;
-  isPrivate: boolean;
   players: Array<{ id?: string; name?: string }>;
 }
 
@@ -18,8 +17,7 @@ export default function RoomCard({
   id, 
   name, 
   playerCount, 
-  maxPlayers, 
-  isPrivate,
+  maxPlayers,
   players 
 }: RoomCardProps) {
   const navigate = useNavigate();
@@ -27,8 +25,6 @@ export default function RoomCard({
   const [, setCurrentRoom] = useAtom(currentRoomAtom);
   
   const [isLoading, setIsLoading] = useState(false);
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
-  const [password, setPassword] = useState('');
 
   const handleJoinClick = () => {
     // Check if user is logged in
@@ -45,14 +41,9 @@ export default function RoomCard({
       return;
     }
 
-    // If room is private, show password input, otherwise join directly
-    if (isPrivate) {
-      setShowPasswordInput(true);
-    } else {
-      joinRoom();
-    }
+    // Join room directly
+    joinRoom();
   };
-
   const joinRoom = async () => {
     try {
       setIsLoading(true);
@@ -66,79 +57,32 @@ export default function RoomCard({
       
     } catch (err) {
       console.error('Error joining room:', err);
-      toast.error('Failed to join room. Please check your password and try again.');
-      if (!isPrivate) {
-        setShowPasswordInput(false);
-      }
+      toast.error('Failed to join room. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    joinRoom();
-  };
 
-  const handleCancelPassword = () => {
-    setShowPasswordInput(false);
-    setPassword('');
-  };
 
   const isFull = playerCount >= maxPlayers;
-
   return (
     <div className="room-card">
       <div className="card-body">
         <h2 className="card-title">{name}</h2>
         <p className="card-info">
           Players: {playerCount}/{maxPlayers}
-          {isPrivate && <span className="private-badge"> 🔒 Private</span>}
         </p>
-        
-        {/* Password input overlay */}
-        {showPasswordInput ? (
-          <div className="password-form">
-            <form onSubmit={handlePasswordSubmit}>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter room password"
-                className="password-input"
-                autoFocus
-                required
-              />
-              <div className="password-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-sm btn-outline" 
-                  onClick={handleCancelPassword}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-sm btn-primary"
-                  disabled={isLoading || !password.trim()}
-                >
-                  {isLoading ? 'Joining...' : 'Join'}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : (
-          <div className="card-actions">
-            <button 
-              onClick={handleJoinClick}
-              className="btn btn-sm btn-primary"
-              disabled={isFull || isLoading}
-            >
-              {isLoading ? 'Joining...' : isFull ? 'Full' : 'Join'}
-            </button>
-          </div>
-        )}
+
+        <div className="card-actions">
+          <button 
+            onClick={handleJoinClick}
+            className="btn btn-sm btn-primary"
+            disabled={isFull || isLoading}
+          >
+            {isLoading ? 'Joining...' : isFull ? 'Full' : 'Join'}
+          </button>
+        </div>
       </div>
     </div>
   );
