@@ -3,6 +3,7 @@ import { useWsClient } from 'ws-request-hook';
 import { MessageType, ChatMessageDto } from '../../api';
 import { useAtom } from 'jotai';
 import { systemMessagesAtom } from '../../atoms';
+import './ChatArea.css';
 
 interface Message {
   id: string;

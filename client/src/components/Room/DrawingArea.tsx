@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAtom } from 'jotai';
-import { currentGameAtom, isDrawerAtom, isRoomOwnerAtom, lastRoundWordAtom } from '../../atoms';
+import { currentGameAtom, isDrawerAtom, isRoomOwnerAtom, endRoundWordAtom } from '../../atoms';
 import DrawingCanvas from './DrawingCanvas';
 import CreateGameForm from './CreateGameForm';
-import './game.css';
+import './DrawingArea.css';
 
 interface DrawingAreaProps {
   roomId: string;
@@ -14,7 +14,7 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
   const [isDrawer] = useAtom(isDrawerAtom);
   const [isRoomOwner] = useAtom(isRoomOwnerAtom);
   const [showCreateGame, setShowCreateGame] = useState(isRoomOwner && !currentGame);
-  const [lastRoundWord] = useAtom(lastRoundWordAtom); 
+  const [lastRoundWord] = useAtom(endRoundWordAtom);
   
   // No game exists yet
   if (!currentGame) {

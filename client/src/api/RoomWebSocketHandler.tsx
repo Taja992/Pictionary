@@ -3,8 +3,8 @@ import { useAtom } from 'jotai';
 import { useWsClient } from 'ws-request-hook';
 import {
   currentGameAtom, userAtom, isDrawerAtom, 
-  roomPlayersAtom, gamePlayersAtom, systemMessagesAtom, 
-  lastRoundWordAtom
+  roomPlayersAtom, gamePlayersAtom, systemMessagesAtom,
+  endRoundWordAtom
 } from '../atoms';
 
 import { DrawerSelectedEvent, DrawerWordEvent,
@@ -24,20 +24,15 @@ interface RoomWebSocketHandlerProps {
 export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocketHandlerProps) {
   const [user] = useAtom(userAtom);
   const [, setCurrentGame] = useAtom(currentGameAtom);
-  const [isDrawer, setIsDrawer] = useAtom(isDrawerAtom);
   const [roomPlayers, setRoomPlayers] = useAtom(roomPlayersAtom);
   const [, setGamePlayers] = useAtom(gamePlayersAtom);
   const [, setSystemMessages] = useAtom(systemMessagesAtom);
   const hasJoinedRef = useRef(false);
   const isNavigatingAwayRef = useRef(false);
-  const [, setLastRoundWord] = useAtom(lastRoundWordAtom); 
-  
+  const [, setLastRoundWord] = useAtom(endRoundWordAtom);
+  const [isDrawer] = useAtom(isDrawerAtom);
   // Get the client with all its functions
-  const { 
-    send,
-    readyState,
-    onMessage
-  } = useWsClient();
+  const {send, readyState, onMessage} = useWsClient();
 
   // Helper function to generate request IDs
   const generateRequestId = useCallback(() => {
@@ -132,7 +127,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     const handleBeforeUnload = () => {
       if (readyState === 1) {
         isNavigatingAwayRef.current = true;
-        
+
         const leaveRoomMessage: RoomLeaveDto = {
           eventType: MessageType.ROOM_LEAVE,
           requestId: generateRequestId(),
@@ -140,7 +135,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           UserId: user.id,
           Username: user.username || 'Anonymous'
         };
-        
+
         send(leaveRoomMessage);
         hasJoinedRef.current = false;
       }
@@ -234,7 +229,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           roundTimeSeconds: message.DurationSeconds
         } : null);
         
-        setIsDrawer(message.DrawerId === user.id);
+        // setIsDrawer(message.DrawerId === user.id);
       }
     );
     unsubscribeHandlers.push(unsubRoundStarted);
@@ -249,7 +244,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           currentDrawerId: message.DrawerId
         } : null);
         
-        setIsDrawer(message.DrawerId === user.id);
+       // setIsDrawer(message.DrawerId === user.id);
       }
     );
     unsubscribeHandlers.push(unsubDrawerSelected);
@@ -281,7 +276,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           currentDrawerId: null
         } : null);
         
-        setIsDrawer(false);
+        // setIsDrawer(false);
       }
     );
     unsubscribeHandlers.push(unsubRoundEnded);
@@ -317,7 +312,7 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
           endTime: new Date().toISOString()
         } : null);
         
-        setIsDrawer(false);
+       // setIsDrawer(false);
       }
     );
     unsubscribeHandlers.push(unsubGameEnded);
@@ -422,7 +417,9 @@ export default function RoomWebSocketHandler({ children, roomId }: RoomWebSocket
     };
   }, [
     readyState, roomId, user.id, isDrawer, onMessage,
-    setCurrentGame, setIsDrawer, roomPlayers, 
+    setCurrentGame,
+    // setIsDrawer,
+    roomPlayers,
     setGamePlayers, setRoomPlayers, setSystemMessages
   ]);
 

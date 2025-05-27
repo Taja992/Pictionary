@@ -1,0 +1,315 @@
+/* DrawingArea.css - Drawing area, canvas, tools, and game state styles */
+
+/* Main drawing area container */
+.drawing-area {
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  height: 100%;
+  width: 100%;
+}
+
+/* Waiting screens */
+.waiting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 2rem;
+  background-color: var(--surface-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.waiting-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+}
+
+.waiting-message {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+/* Canvas container */
+.canvas-container {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-canvas);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  margin: 0.5rem;
+  overflow: hidden;
+  width: calc(100% - 1rem);
+  height: calc(100% - 1rem);
+  min-height: 300px;
+}
+
+.drawing-stage {
+  display: block;
+  background-color: white;
+  width: 100%;
+  height: 100%;
+}
+
+.drawing-canvas {
+  touch-action: none;
+  background-color: var(--color-canvas);
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Drawing tools */
+.drawing-tools {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--surface-alt-color);
+  border-bottom: 1px solid var(--border-color);
+  width: 100%;
+  justify-content: center;
+}
+
+.tool-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.color-picker {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.size-picker {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.color-swatch.active {
+  border-color: #000;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px white;
+}
+
+.size-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: var(--surface-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+.size-btn:hover {
+  transform: translateY(-2px);
+}
+
+.size-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.tool-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+  margin: 0 0.5rem;
+}
+
+.clear-btn {
+  background-color: var(--color-error);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Word display */
+.word-display-simple {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
+}
+
+.word-display-simple strong {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.current-word-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.current-word {
+  background-color: var(--color-accent);
+  color: #121212;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+/* Drawer indicator */
+.drawer-indicator {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
+  background-color: var(--color-drawer);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: var(--shadow-md);
+  z-index: 20;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+/* Create game form */
+.create-game-form {
+  width: 100%;
+  max-width: 400px;
+  background-color: var(--surface-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-alt-color);
+  color: var(--text-color);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.create-game-btn {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.create-game-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cancel-game-btn {
+  background-color: var(--surface-alt-color);
+  color: var(--text-muted);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.cancel-game-btn:hover {
+  background-color: var(--surface-color);
+  color: var(--text-color);
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}

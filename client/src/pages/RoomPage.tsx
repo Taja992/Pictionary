@@ -6,17 +6,13 @@ import {
   currentGameAtom, 
   currentRoomAtom,
   roomPlayersAtom,
-  gamePlayersAtom,
-  isDrawerAtom
+  gamePlayersAtom
 } from '../atoms';
 import { api, RoomWebSocketHandler } from '../api';
-// import { GameHeader } from '../components/Room';
-import DrawingArea from '../components/Room/DrawingArea';
-import '../components/Room/game.css';
+import { DrawingArea, GamePlayerList, RoomPlayerList, ChatArea } from '../components/Room';
+import './RoomPage.css';
 import toast from 'react-hot-toast';
-import GamePlayerList from '../components/Room/GamePlayerList';
-import RoomPlayerList from '../components/Room/RoomList';
-import ChatArea from '../components/Room/ChatArea';
+
 
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,7 +32,7 @@ export default function RoomPage() {
   const [user] = useAtom(userAtom);
   const [, setRoomPlayers] = useAtom(roomPlayersAtom);
   const [, setGamePlayers] = useAtom(gamePlayersAtom);
-  const [, setIsDrawer] = useAtom(isDrawerAtom);
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -86,12 +82,6 @@ export default function RoomPage() {
               
               setGamePlayers(gamePlayers);
             }
-
-            if (gameResponse.data.currentDrawerId && user.id === gameResponse.data.currentDrawerId) {
-              setIsDrawer(true);
-            } else {
-              setIsDrawer(false);
-            }
           }
         }
       } catch (err) {
@@ -107,7 +97,6 @@ export default function RoomPage() {
     
     // Clean up when unmounting
     return () => {
-      setIsDrawer(false);
       setCurrentRoom(null);
       setCurrentGame(null);
       setRoomPlayers([]);

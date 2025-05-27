@@ -11,8 +11,15 @@ export const currentRoomAtom = atom<RoomDto | null>(null);
 
 // Current Game
 export const currentGameAtom = atom<GameDto | null>(null);
-export const isDrawerAtom = atom<boolean>(false);
-export const lastRoundWordAtom = atom<string | null>(null);
+
+// This is just to be able to show what the word was to other users at the end of a round
+export const endRoundWordAtom = atom<string | null>(null);
+
+export const isDrawerAtom = atom((get) => {
+  const user = get(userAtom);
+  const currentGame = get(currentGameAtom);
+  return currentGame?.currentDrawerId === user.id;
+});
 
 // Check room owner
 export const isRoomOwnerAtom = atom((get) => {
@@ -36,27 +43,15 @@ interface UserDtoExpiration extends UserDto {
 // Create the user atom with expiration time
 export const userAtom = atomWithStorage<UserDtoExpiration>('pictionary_user', defaultUser);
 
-
-// Players List
-export const roomPlayersAtom = atom<PlayerDto[]>([]);
-
-
-// export interface PlayerDto {
-//   id?: string;
-//   name?: string;
-//   isOnline?: boolean;
-// }
-interface ScoreDto extends PlayerDto {
-  totalPoints?: number;      
-  lastPointsGained?: number; 
-  lastScoreTime?: Date;      
+interface GamePlayerDto extends PlayerDto {
+  totalPoints?: number;
+  lastPointsGained?: number;
+  lastScoreTime?: Date;
 }
 
-export const gamePlayersAtom = atom<ScoreDto[]>([]);
-
-// Current drawer
-export const currentDrawerAtom = atom<PlayerDto | null>(null);
-
+export const gamePlayersAtom = atom<GamePlayerDto[]>([]);
+// Players List
+export const roomPlayersAtom = atom<PlayerDto[]>([]);
 
 
 export interface SystemMessage {

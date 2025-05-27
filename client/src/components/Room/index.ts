@@ -1,5 +1,4 @@
-export { default as PlayerList } from './GamePlayerList';
-export { default as DrawingCanvas } from './DrawingCanvas';
-export { default as DrawingTools } from './DrawingTools';
+export { default as DrawingArea } from './DrawingArea';
+export { default as GamePlayerList } from './GamePlayerList';
+export { default as RoomPlayerList } from './RoomList';
 export { default as ChatArea } from './ChatArea';
-export { default as CreateGameForm } from './CreateGameForm';
