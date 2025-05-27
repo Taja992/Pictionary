@@ -15,100 +15,87 @@ export default function DrawingArea({ roomId }: DrawingAreaProps) {
   const [isRoomOwner] = useAtom(isRoomOwnerAtom);
   const [showCreateGame, setShowCreateGame] = useState(isRoomOwner && !currentGame);
   const [lastRoundWord] = useAtom(endRoundWordAtom);
-  
-  // No game exists yet
+
+  // Helper function to render the game creation UI
+  const renderGameCreationUI = () => {
+    if (!isRoomOwner) return null;
+    
+    return showCreateGame ? (
+      <CreateGameForm 
+        onGameCreated={(gameId) => {
+          console.log(`Game ${gameId} was created`);
+          setShowCreateGame(false);
+        }}
+      />
+    ) : (
+      <button 
+        className="btn btn-primary"
+        onClick={() => setShowCreateGame(true)}
+      >
+        Create Game
+      </button>
+    );
+  };
+
+  // Helper function to render waiting container
+  const renderWaitingContainer = (title: string, message?: string, showGameCreation = false) => (
+    <div className="drawing-area waiting-container">
+      <h2>{title}</h2>
+      {message && <p className="waiting-message">{message}</p>}
+      {showGameCreation && renderGameCreationUI()}
+    </div>
+  );
+
+  // Handle no game state
   if (!currentGame) {
     if (isRoomOwner) {
       return (
         <div className="drawing-area waiting-container">
-          {showCreateGame ? (
-            <CreateGameForm 
-              onGameCreated={(gameId) => {
-                console.log(`Game ${gameId} was created`);
-                setShowCreateGame(false);
-              }}
-            />
-          ) : (
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowCreateGame(true)}
-            >
-              Create Game
-            </button>
-          )}
-        </div>
-      );
-    } else {
-      return (
-        <div className="drawing-area waiting-container">
-          <h2>Waiting for the game to start</h2>
-          <p className="waiting-message">The room owner will create a game shortly.</p>
+          {renderGameCreationUI()}
         </div>
       );
     }
+    return renderWaitingContainer(
+      "Waiting for the game to start", 
+      "The room owner will create a game shortly."
+    );
   }
   
-  // Game exists - show appropriate UI based on game status
+  // Handle game states
   switch (currentGame.status) {
     case 'Starting':
-      return (
-        <div className="drawing-area waiting-container">
-          <h2>Game is about to start!</h2>
-          <p className="waiting-message">Get ready to play Pictionary.</p>
-        </div>
+      return renderWaitingContainer(
+        "Game is about to start!", 
+        "Get ready to play Pictionary."
       );
     
     case 'Drawing':
       return (
         <div className="drawing-area">
           <DrawingCanvas isDrawer={isDrawer} roomId={roomId} />
-          {/* Removed the floating indicator - the word is already shown in the drawing tools */}
         </div>
       );
     
     case 'RoundEnd':
       console.log('RoundEnd - currentGame:', currentGame);
-      return (
-        <div className="drawing-area waiting-container">
-          <h2>Round {currentGame.currentRound} ended!</h2>
-          <p className="waiting-message">
-            The word was: <strong>{lastRoundWord || 'Unknown'}</strong>
-          </p>
-          <p className="waiting-message">Preparing for next round...</p>
-        </div>
+      return renderWaitingContainer(
+        `Round ${currentGame.currentRound} ended!`,
+        `The word was: ${lastRoundWord || 'Unknown'}. Preparing for next round...`
       );
     
     case 'GameEnd':
-  return (
-    <div className="drawing-area waiting-container">
-      <h2>Game Over! The last word was <strong>{lastRoundWord || 'Unknown'}</strong></h2>
-      <p className="waiting-message">Thanks for playing!</p>
-      {isRoomOwner && (
-        showCreateGame ? (
-          <CreateGameForm 
-            onGameCreated={(gameId) => {
-              console.log(`Game ${gameId} was created`);
-              setShowCreateGame(false);
-            }}
-          />
-        ) : (
-          <button 
-            className="create-game-btn mt-4"
-            onClick={() => setShowCreateGame(true)}
-          >
-            Create New Game
-          </button>
-        )
-      )}
-    </div>
-  );
-    
-    default:
       return (
         <div className="drawing-area waiting-container">
-          <h2>Waiting for the game to start</h2>
-          <p className="waiting-message">The game will begin soon.</p>
+          <h2>Game Over! The last word was <strong>{lastRoundWord || 'Unknown'}</strong></h2>
+          <p className="waiting-message">Thanks for playing!</p>
+          {renderGameCreationUI()}
         </div>
+      );
+    
+    default:
+      return renderWaitingContainer(
+        "Waiting for the game to start", 
+        "The game will begin soon."
       );
   }
 }
