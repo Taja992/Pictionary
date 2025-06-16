@@ -1,5 +1,7 @@
-# Deployed at
-    https://drawit-459009.web.app/
+# ~~Deployed at~~
+~~https://drawit-459009.web.app/~~
+
+**Note: Deployment on hold**
 
 ## PostgreSQL Requirement
 
